@@ -50,6 +50,7 @@ class KBEntityLinker(Component, Serializable):
                  inverted_index_filename: str,
                  entities_list_filename: str,
                  q2name_filename: str,
+                 who_entities_filename: str = None,
                  save_path: str = None,
                  q2descr_filename: str = None,
                  rel_ranker: RelRankerBertInfer = None,
@@ -98,6 +99,7 @@ class KBEntityLinker(Component, Serializable):
         self.entities_list_filename = entities_list_filename
         self.build_inverted_index = build_inverted_index
         self.q2name_filename = q2name_filename
+        self.who_entities_filename = who_entities_filename
         self.q2descr_filename = q2descr_filename
         self.kb_format = kb_format
         self.kb_filename = kb_filename
@@ -142,6 +144,8 @@ class KBEntityLinker(Component, Serializable):
         self.inverted_index = load_pickle(self.load_path / self.inverted_index_filename)
         self.entities_list = load_pickle(self.load_path / self.entities_list_filename)
         self.q2name = load_pickle(self.load_path / self.q2name_filename)
+        if self.who_entities_filename:
+            self.who_entities = load_pickle(self.load_path / self.who_entities_filename)
 
     def save(self) -> None:
         save_pickle(self.inverted_index, self.save_path / self.inverted_index_filename)
@@ -171,7 +175,8 @@ class KBEntityLinker(Component, Serializable):
 
         return entity_ids_batch, confidences_batch
 
-    def link_entity(self, entity: str, context: str = None) -> Tuple[List[str], List[float]]:
+    def link_entity(self, entity: str, context: str = None, template_found: str = None) -> \
+                                                                   Tuple[List[str], List[float]]:
         confidences = []
         if not entity:
             entities_ids = ['None']
@@ -180,6 +185,8 @@ class KBEntityLinker(Component, Serializable):
             candidate_entities, candidate_names = self.candidate_entities_names(entity, candidate_entities)
             entities_ids, confidences, srtd_cand_ent = self.sort_found_entities(candidate_entities,
                                                                                 candidate_names, entity, context)
+            if template_found:
+                entities_ids = self.filter_entities(entities_ids, template_found)
 
         return entities_ids, confidences
 
@@ -333,3 +340,10 @@ class KBEntityLinker(Component, Serializable):
         self.q2descr = []
         if id_to_descr_dict:
             self.q2descr = [id_to_descr_dict[entity] for entity in self.entities_list]
+
+    def filter_entities(self, entities: List[str], template_found: str) -> List[str]:
+        if template_found in ["who is xxx?", "who was xxx?"]:
+            entities = [entity for entity in entities if entity in self.who_entities]
+        if template_found in ["what is xxx?", "what was xxx?"]:
+            entities = [entity for entity in entities if entity not in self.who_entities]
+        return entities

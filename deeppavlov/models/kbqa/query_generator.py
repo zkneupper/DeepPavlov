@@ -18,6 +18,7 @@ from logging import getLogger
 from typing import Tuple, List, Optional, Union, Dict, Any
 from collections import namedtuple
 
+import numpy as np
 import nltk
 
 from deeppavlov.core.common.registry import register
@@ -109,7 +110,7 @@ class QueryGenerator(QueryGeneratorBase):
         log.debug(f"(query_parser)rel_directions: {triplet_info_list}")
         entity_ids = [entity[:self.entities_to_leave] for entity in entity_ids]
         if rels_from_template is not None:
-            rels = rels_from_template
+            rels = [[(rel, 1.0) for rel in rel_list] for rel_list in rels_from_template]
         else:
             rels = [self.find_top_rels(question, entity_ids, triplet_info)
                     for triplet_info in triplet_info_list]
@@ -148,13 +149,14 @@ class QueryGenerator(QueryGeneratorBase):
         type_combs = make_combs(selected_type_ids, permut=False)
         log.debug(f"(query_parser)entity_combs: {entity_combs[:3]}, type_combs: {type_combs[:3]}, rel_combs: {rel_combs[:3]}")
         for comb_num, combs in enumerate(itertools.product(entity_combs, type_combs, rel_combs)):
+            confidence = np.prod([score for rel, score in combs[2][:-1]])
             query_hdt_seq = [
                 fill_query(query_hdt_elem, combs[0], combs[1], combs[2]) for query_hdt_elem in query_sequence]
             if comb_num == 0:
                 log.debug(f"\n_______________________________\nfilled query: {query_hdt_seq}\n_______________________________\n")
             candidate_output = self.wiki_parser(
                 rels_from_query + answer_ent, query_hdt_seq, filter_info, order_info)
-            candidate_outputs += [combs[2][:-1] + output for output in candidate_output]
+            candidate_outputs += [[rel for rel, score in combs[2][:-1]] + output + [confidence] for output in candidate_output]
             if return_if_found and candidate_output:
                 return candidate_outputs
         log.debug(f"(query_parser)loop time: {datetime.datetime.now() - start_time}")

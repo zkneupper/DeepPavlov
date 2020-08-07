@@ -14,6 +14,8 @@
 
 from typing import Tuple, List, Any
 
+from scipy.special import softmax
+
 from deeppavlov.core.common.registry import register
 from deeppavlov.core.models.component import Component
 from deeppavlov.core.models.serializable import Serializable
@@ -54,7 +56,8 @@ class RelRankerInfer(Component, Serializable):
     def save(self) -> None:
         pass
 
-    def __call__(self, question_batch: List[str], candidate_rels_batch: List[List[str]]) -> List[List[Tuple[str, Any]]]:
+    def __call__(self, question_batch: List[str], candidate_rels_batch: List[List[str]]) -> \
+                                                                        List[List[Tuple[str, Any]]]:
         rels_with_scores_batch = []
         for question, candidate_rels in zip(question_batch, candidate_rels_batch):
             rels_with_scores_batch.append(self.rank_rels(question, candidate_rels))
@@ -76,6 +79,10 @@ class RelRankerInfer(Component, Serializable):
             probas = [proba[1] for proba in probas]
             for j, rel in enumerate(rels_batch):
                 rels_with_scores.append((rel, probas[j]))
+        scores = [score for rel, score in rels_with_scores]
+        softmax_scores = softmax(scores)
+        rels_with_scores = [(rel, softmax_score) for (rel, score), softmax_score in 
+                                                          zip(rels_with_scores, softmax_scores)]
         rels_with_scores = sorted(rels_with_scores, key=lambda x: x[1], reverse=True)
 
         return rels_with_scores[:self.rels_to_leave]
