@@ -148,7 +148,7 @@ class WikiParser:
 
         elif entity.endswith(self.lang):
             # entity: '"Lake Baikal"@en'
-            entity = entity.strip(self.lang)
+            entity = entity[:-3]
             return entity
 
         elif "^^" in entity:
