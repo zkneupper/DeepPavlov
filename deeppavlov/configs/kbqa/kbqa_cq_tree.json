@@ -31,9 +31,17 @@
         "templates_filename": "templates_eng.json"
       },
       {
-        "config_path": "{CONFIGS_PATH}/classifiers/query_pr.json",
+        "class_name": "udpipe_parser",
+        "udpipe_filename": "{DOWNLOADS_PATH}/wikidata_eng/english-ewt-ud-2.5-191206.udpipe",
         "in": ["x"],
-        "out": ["template_type"]
+        "out": ["syntax_info"]
+      },
+      {
+        "class_name": "tree_to_sparql",
+        "sparql_queries_filename": "{DOWNLOADS_PATH}/wikidata/sparql_queries.json",
+        "lang": "eng",
+        "in": ["syntax_info", "entities_pos"],
+        "out": ["x_sanitized", "query_nums", "entities_dict", "types_dict"]
       },
       {
         "class_name": "kbqa_entity_linker",
@@ -80,7 +88,8 @@
         "sparql_queries_filename": "{DOWNLOADS_PATH}/wikidata/sparql_queries.json",
         "entities_to_leave": 5,
         "rels_to_leave": 10,
-        "in": ["x", "x", "template_type", "entities", "types"],
+        "syntax_structure_known": true,
+        "in": ["x", "x_sanitized", "query_nums", "entities_dict", "types_dict"],
         "out": ["candidate_answers"]
       },
       {

@@ -16,6 +16,7 @@ import re
 import multiprocessing as mp
 import json
 import functools
+import time
 from logging import getLogger
 from typing import Tuple, List, Dict, Any
 
@@ -77,7 +78,9 @@ class TemplateMatcher(Serializable):
         entities, types, relations, relation_dirs = [], [], [], []
         query_type = ""
         template_found = ""
+        tm1 = time.time()
         results = self.pool.map(RegexpMatcher(question), self.templates)
+        tm1 = time.time()
         results = functools.reduce(lambda x, y: x + y, results)
         replace_tokens = [("the uk", "united kingdom"), ("the us", "united states")]
         if results:
@@ -128,7 +131,8 @@ class TemplateMatcher(Serializable):
     def check_whatis_templates(self, template: Dict[str, Any], entities_cand: List[str], entities_from_ner: List[str]):
         entities_from_ner = [entity.lower() for entity in entities_from_ner]
         match = True
-        if template["template"] in ["who is xxx?", "what is xxx?", "who was xxx?", "what was xxx?", "where is xxx?"]:
+        if template["template"] in ["who is xxx?", "what is xxx?", "who was xxx?", "what was xxx?", "where is xxx?",
+                                    "tell me more about xxx?", "tell me about xxx?"]:
             entities_cand = [re.sub(r"\b(a |the )", '', entity) for entity in entities_cand]
             if entities_cand != entities_from_ner:
                 match = False

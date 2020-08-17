@@ -1,5 +1,6 @@
 {
   "UD_pymorphy_lemmatizer": "deeppavlov.models.morpho_tagger.lemmatizer:UDPymorphyLemmatizer",
+  "adj_to_noun": "deeppavlov.models.kbqa.tree_to_sparql:AdjToNoun",
   "aiml_skill": "deeppavlov.skills.aiml_skill.aiml_skill:AIMLSkill",
   "amazon_ecommerce_reader": "deeppavlov.dataset_readers.amazon_ecommerce_reader:AmazonEcommerceReader",
   "api_requester": "deeppavlov.models.api_requester.api_requester:ApiRequester",
@@ -195,6 +196,7 @@
   "ubuntu_v1_mt_reader": "deeppavlov.dataset_readers.ubuntu_v1_mt_reader:UbuntuV1MTReader",
   "ubuntu_v2_mt_reader": "deeppavlov.dataset_readers.ubuntu_v2_mt_reader:UbuntuV2MTReader",
   "ubuntu_v2_reader": "deeppavlov.dataset_readers.ubuntu_v2_reader:UbuntuV2Reader",
+  "udpipe_parser": "deeppavlov.models.kbqa.tree_to_sparql:UdpipeParser",
   "wiki_parser": "deeppavlov.models.kbqa.wiki_parser:WikiParser",
   "wiki_parser_online": "deeppavlov.models.kbqa.wiki_parser_online:WikiParserOnline",
   "wiki_sqlite_vocab": "deeppavlov.vocabs.wiki_sqlite:WikiSQLiteVocab",
