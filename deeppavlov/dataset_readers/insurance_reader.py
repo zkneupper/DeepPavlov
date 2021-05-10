@@ -70,23 +70,27 @@ class InsuranceReader(DatasetReader):
             eli = eli[:-1]
             _, c, _ = eli.split('\t')
             contexts.append(c)
-        idxs2cont_vocab = {el[1]: el[0] for el in enumerate(contexts)}
-        return idxs2cont_vocab
+        return {el[1]: el[0] for el in enumerate(contexts)}
 
     def _build_int2tok_vocab(self, fname: Path) -> Dict[int, str]:
         with open(fname, 'r') as f:
             data = f.readlines()
-        int2tok_vocab = {int(el.split('\t')[0].split('_')[1]): el.split('\t')[1][:-1] for el in data}
-        return int2tok_vocab
+        return {
+            int(el.split('\t')[0].split('_')[1]): el.split('\t')[1][:-1]
+            for el in data
+        }
 
     def _build_response2str_vocab(self, fname: Path) -> Dict[int, str]:
         with open(fname, 'r') as f:
             data = f.readlines()
             response2idxs_vocab = {int(el.split('\t')[0]) - 1:
                                        (el.split('\t')[1][:-1]).split(' ') for el in data}
-        response2str_vocab = {el[0]: ' '.join([self.int2tok_vocab[int(x.split('_')[1])]
-                                               for x in el[1]]) for el in response2idxs_vocab.items()}
-        return response2str_vocab
+        return {
+            el[0]: ' '.join(
+                self.int2tok_vocab[int(x.split('_')[1])] for x in el[1]
+            )
+            for el in response2idxs_vocab.items()
+        }
 
     def _preprocess_data_train(self, fname: Path) -> List[Tuple[List[str], int]]:
         positive_responses_pool = []
@@ -98,7 +102,7 @@ class InsuranceReader(DatasetReader):
         for k, eli in enumerate(data):
             eli = eli[:-1]
             q, pa = eli.split('\t')
-            q_tok = ' '.join([self.int2tok_vocab[int(el.split('_')[1])] for el in q.split()])
+            q_tok = ' '.join(self.int2tok_vocab[int(el.split('_')[1])] for el in q.split())
             pa_list = [int(el) - 1 for el in pa.split(' ')]
             pa_list_tok = [self.response2str_vocab[el] for el in pa_list]
             for elj in pa_list_tok:
@@ -120,7 +124,7 @@ class InsuranceReader(DatasetReader):
         for eli in data:
             eli = eli[:-1]
             pa, q, na = eli.split('\t')
-            q_tok = ' '.join([self.int2tok_vocab[int(el.split('_')[1])] for el in q.split()])
+            q_tok = ' '.join(self.int2tok_vocab[int(el.split('_')[1])] for el in q.split())
             pa_list = [int(el) - 1 for el in pa.split(' ')]
             pa_list_tok = [self.response2str_vocab[el] for el in pa_list]
             nas = [int(el) - 1 for el in na.split(' ')]

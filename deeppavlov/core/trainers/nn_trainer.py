@@ -186,13 +186,14 @@ class NNTrainer(FitTrainer):
         m_name, score = metrics[0]
 
         # Update the patience
-        if self.score_best is None:
+        if (
+            self.score_best is not None
+            and self.improved(score, self.score_best)
+            or self.score_best is None
+        ):
             self.patience = 0
         else:
-            if self.improved(score, self.score_best):
-                self.patience = 0
-            else:
-                self.patience += 1
+            self.patience += 1
 
         # Run the validation model-saving logic
         if self._is_initial_validation():

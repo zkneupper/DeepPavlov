@@ -61,10 +61,7 @@ class KerasSiameseModel(SiameseModel, KerasModel):
         self.attention = attention
         self.use_matrix = use_matrix
         self.emb_matrix = emb_matrix
-        if dynamic_batch:
-            self.max_sequence_length = None
-        else:
-            self.max_sequence_length = max_sequence_length
+        self.max_sequence_length = None if dynamic_batch else max_sequence_length
         self.model = self.create_model()
         self.compile()
         if self.load_path.exists():
@@ -99,22 +96,18 @@ class KerasSiameseModel(SiameseModel, KerasModel):
         pass
 
     def create_context_model(self) -> Model:
-        m = Model(self.model.inputs[:-1],
+        return Model(self.model.inputs[:-1],
                   self.model.get_layer("sentence_embedding").get_output_at(0))
-        return m
 
     def create_response_model(self) -> Model:
-        m = Model(self.model.inputs[-1],
+        return Model(self.model.inputs[-1],
                   self.model.get_layer("sentence_embedding").get_output_at(1))
-        return m
 
     def _train_on_batch(self, batch: List[np.ndarray], y: List[int]) -> float:
-        loss = self.model.train_on_batch(batch, np.asarray(y))
-        return loss
+        return self.model.train_on_batch(batch, np.asarray(y))
 
     def _predict_on_batch(self, batch: List[np.ndarray]) -> np.ndarray:
-        y_pred = self.model.predict_on_batch(batch)
-        return y_pred
+        return self.model.predict_on_batch(batch)
 
     def _predict_context_on_batch(self, batch: List[np.ndarray]) -> np.ndarray:
         return self.context_model.predict_on_batch(batch)

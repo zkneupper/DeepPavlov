@@ -384,8 +384,7 @@ class MTBertSequenceTaggingTask(MTBertTask):
         """
         max_length = tf.reduce_max(self.seq_lengths)
         one_hot_max_len = tf.one_hot(self.seq_lengths - 1, max_length)
-        tag_mask = tf.cumsum(one_hot_max_len[:, ::-1], axis=1)[:, ::-1]
-        return tag_mask
+        return tf.cumsum(one_hot_max_len[:, ::-1], axis=1)[:, ::-1]
 
     def encoder_layers(self):
         """
@@ -843,7 +842,11 @@ class MultiTaskBert(LRScheduledTFModel):
         # TODO: test passing arguments as args
         if args and kwargs:
             raise ValueError("You can use either args or kwargs not both")
-        n_in = sum([len(inp) if isinstance(inp, list) else inp for inp in self.in_distribution.values()])
+        n_in = sum(
+            len(inp) if isinstance(inp, list) else inp
+            for inp in self.in_distribution.values()
+        )
+
         if args:
             args_in, args_in_y = args[:n_in], args[n_in:]
             in_by_tasks = self._distribute_arguments_by_tasks(args_in, {}, list(self.tasks.keys()), "in")
@@ -910,9 +913,13 @@ class MultiTaskBert(LRScheduledTFModel):
                                  "task for inference")
             return {task_names[0]: list(kwargs.values()) if kwargs else list(args)}
 
-        if all([isinstance(task_distr, int) for task_distr in distribution.values()]):
+        if all(
+            isinstance(task_distr, int) for task_distr in distribution.values()
+        ):
             ints = True
-        elif all([isinstance(task_distr, list) for task_distr in distribution.values()]):
+        elif all(
+            isinstance(task_distr, list) for task_distr in distribution.values()
+        ):
             ints = False
         else:
             raise ConfigError(
@@ -921,7 +928,7 @@ class MultiTaskBert(LRScheduledTFModel):
                 f"{what_to_distribute}_distribution = {distribution}")
 
         args_by_task = {}
-        
+
         flattened = []
         for task_name in task_names:
             if isinstance(task_name, str):
@@ -934,11 +941,8 @@ class MultiTaskBert(LRScheduledTFModel):
             ints = True
             distribution = {task_name: len(in_distr) for task_name, in_distr in distribution.items()}
         if ints:
-            if kwargs:
-                values = list(kwargs.values())
-            else:
-                values = args
-            n_distributed = sum([n_args for n_args in distribution.values()])
+            values = list(kwargs.values()) if kwargs else args
+            n_distributed = sum(distribution.values())
             if len(values) != n_distributed:
                 raise ConfigError(
                     f"The number of '{what_to_distribute}' arguments of MultitaskBert does not match "
@@ -952,7 +956,7 @@ class MultiTaskBert(LRScheduledTFModel):
                 n_args = distribution[task_name]
                 args_by_task[task_name] = [values[i] for i in range(values_taken, values_taken + n_args)]
                 values_taken += n_args
-            
+
         else:
             assert kwargs
             arg_names_used = []
@@ -1101,12 +1105,11 @@ class MTBertReUser:
             else:
                 flattened.extend(elem)
 
-        if in_distribution is None:
-            if len(flattened) > 1:
-                raise ValueError(
-                    "If ``in_distribution`` parameter is not provided, there has to be only 1 task."
-                    f"task_names = {self.task_names}")
-          
+        if in_distribution is None and len(flattened) > 1:
+            raise ValueError(
+                "If ``in_distribution`` parameter is not provided, there has to be only 1 task."
+                f"task_names = {self.task_names}")
+
         self.in_distribution = in_distribution
 
     def __call__(self, *args, **kwargs) -> List[Any]:
@@ -1119,8 +1122,12 @@ class MTBertReUser:
         Returns:
             list of results of inference of tasks listed in ``task_names``
         """
-        res = self.mt_bert.call(args, kwargs, task_names=self.task_names, in_distribution=self.in_distribution)
-        return res
+        return self.mt_bert.call(
+            args,
+            kwargs,
+            task_names=self.task_names,
+            in_distribution=self.in_distribution,
+        )
 
 
 @register("input_splitter")

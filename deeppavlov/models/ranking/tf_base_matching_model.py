@@ -82,9 +82,7 @@ class TensorflowBaseMatchingModel(TFModel, SiameseModel):
         # 3. Lens of context sentences
         lens = []
         for context in [context_sentences] * len(response_sentences):
-            context_sentences_lens = []
-            for sent in context:
-                context_sentences_lens.append(len(sent[sent != 0]))
+            context_sentences_lens = [len(sent[sent != 0]) for sent in context]
             lens.append(context_sentences_lens)
         batch_buffer_context_len += lens
         # 4. Lens of response sentences

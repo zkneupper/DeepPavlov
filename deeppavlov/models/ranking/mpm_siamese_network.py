@@ -70,36 +70,49 @@ class MPMSiameseNetwork(BiLSTMSiameseNetwork):
     def create_lstm_layer_1(self):
         ker_in = glorot_uniform(seed=self.seed)
         rec_in = Orthogonal(seed=self.seed)
-        bioutp = Bidirectional(LSTM(self.hidden_dim,
-                                    input_shape=(self.max_sequence_length, self.embedding_dim,),
-                                    kernel_regularizer=None,
-                                    recurrent_regularizer=None,
-                                    bias_regularizer=None,
-                                    activity_regularizer=None,
-                                    recurrent_dropout=self.recdrop_val,
-                                    dropout=self.inpdrop_val,
-                                    kernel_initializer=ker_in,
-                                    recurrent_initializer=rec_in,
-                                    return_sequences=True), merge_mode=None)
-        return bioutp
+        return Bidirectional(
+            LSTM(
+                self.hidden_dim,
+                input_shape=(
+                    self.max_sequence_length,
+                    self.embedding_dim,
+                ),
+                kernel_regularizer=None,
+                recurrent_regularizer=None,
+                bias_regularizer=None,
+                activity_regularizer=None,
+                recurrent_dropout=self.recdrop_val,
+                dropout=self.inpdrop_val,
+                kernel_initializer=ker_in,
+                recurrent_initializer=rec_in,
+                return_sequences=True,
+            ),
+            merge_mode=None,
+        )
 
     def create_lstm_layer_2(self):
         ker_in = glorot_uniform(seed=self.seed)
         rec_in = Orthogonal(seed=self.seed)
-        bioutp = Bidirectional(LSTM(self.aggregation_dim,
-                                    input_shape=(self.max_sequence_length, 8 * self.perspective_num,),
-                                    kernel_regularizer=None,
-                                    recurrent_regularizer=None,
-                                    bias_regularizer=None,
-                                    activity_regularizer=None,
-                                    recurrent_dropout=self.recdrop_val,
-                                    dropout=self.inpdrop_val,
-                                    kernel_initializer=ker_in,
-                                    recurrent_initializer=rec_in,
-                                    return_sequences=False),
-                               merge_mode='concat',
-                               name="sentence_embedding")
-        return bioutp
+        return Bidirectional(
+            LSTM(
+                self.aggregation_dim,
+                input_shape=(
+                    self.max_sequence_length,
+                    8 * self.perspective_num,
+                ),
+                kernel_regularizer=None,
+                recurrent_regularizer=None,
+                bias_regularizer=None,
+                activity_regularizer=None,
+                recurrent_dropout=self.recdrop_val,
+                dropout=self.inpdrop_val,
+                kernel_initializer=ker_in,
+                recurrent_initializer=rec_in,
+                return_sequences=False,
+            ),
+            merge_mode='concat',
+            name="sentence_embedding",
+        )
 
     def create_model(self) -> Model:
         if self.use_matrix:
@@ -176,5 +189,4 @@ class MPMSiameseNetwork(BiLSTMSiameseNetwork):
             ker_in = glorot_uniform(seed=self.seed)
             dense = Dense(self.dense_dim, kernel_initializer=ker_in)(reduced)
             dist = Dense(1, activation='sigmoid', name="score_model")(dense)
-        model = Model([context, response], dist)
-        return model
+        return Model([context, response], dist)

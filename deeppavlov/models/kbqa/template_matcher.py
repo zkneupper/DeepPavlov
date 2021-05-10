@@ -56,7 +56,10 @@ class TemplateMatcher(Serializable):
         """
         super().__init__(save_path=None, load_path=load_path)
         self.templates_filename = templates_filename
-        self.num_processors = mp.cpu_count() if num_processors == None else num_processors
+        self.num_processors = (
+            mp.cpu_count() if num_processors is None else num_processors
+        )
+
         self.pool = mp.Pool(self.num_processors)
         self.load()
 
@@ -68,8 +71,7 @@ class TemplateMatcher(Serializable):
     def save(self) -> None:
         raise NotImplementedError
 
-    def __call__(self, question: str, entities_from_ner: List[str]) -> \
-            Tuple[Union[List[str], list], list, Union[list, Any], Union[list, Any], Union[str, Any], Any, Union[
+    def __call__(self, question: str, entities_from_ner: List[str]) -> Tuple[Union[List[str], list], list, Union[list, Any], Union[list, Any], Union[str, Any], Any, Union[
                 str, Any]]:
         question = question.lower()
         question = self.sanitize(question)
@@ -95,9 +97,12 @@ class TemplateMatcher(Serializable):
                 types_cand = [found_ent[pos].replace('?', '').split(',')[0] for pos in positions_type_tokens]
                 unuseful_tokens = [found_ent[pos].replace('?', '') for pos in positions_unuseful_tokens]
                 entity_lengths = [len(entity) for entity in entities_cand]
-                entity_num_tokens = all([len(entity.split(' ')) < 6 for entity in entities_cand])
+                entity_num_tokens = all(len(entity.split(' ')) < 6 for entity in entities_cand)
                 type_lengths = [len(entity_type) for entity_type in types_cand]
-                unuseful_tokens_len = sum([len(unuseful_tok) for unuseful_tok in unuseful_tokens])
+                unuseful_tokens_len = sum(
+                    len(unuseful_tok) for unuseful_tok in unuseful_tokens
+                )
+
                 log.debug(f"found template: {template}, {found_ent}")
                 match, entities_cand = self.match_template_and_ner(entities_cand, entities_from_ner, template_found)
                 if match and (0 not in entity_lengths or 0 not in type_lengths and entity_num_tokens):

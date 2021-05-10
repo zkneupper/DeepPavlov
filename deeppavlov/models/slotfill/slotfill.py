@@ -85,26 +85,25 @@ class DstcSlotFillingNetwork(Component, Serializable):
             curent_tag = tag.split('-')[-1].strip()
             current_prefix = tag.split('-')[0]
             if tag.startswith('B-'):
-                if len(chunk_tokens) > 0:
+                if chunk_tokens:
                     entities.append(' '.join(chunk_tokens))
                     slots.append(prev_tag)
                     chunk_tokens = []
                 chunk_tokens.append(token)
-            if current_prefix == 'I':
-                if curent_tag != prev_tag:
-                    if len(chunk_tokens) > 0:
-                        entities.append(' '.join(chunk_tokens))
-                        slots.append(prev_tag)
-                        chunk_tokens = []
-                else:
-                    chunk_tokens.append(token)
-            if current_prefix == 'O':
-                if len(chunk_tokens) > 0:
-                    entities.append(' '.join(chunk_tokens))
-                    slots.append(prev_tag)
-                    chunk_tokens = []
+            if (
+                current_prefix == 'I'
+                and curent_tag != prev_tag
+                and chunk_tokens
+                or current_prefix == 'O'
+                and chunk_tokens
+            ):
+                entities.append(' '.join(chunk_tokens))
+                slots.append(prev_tag)
+                chunk_tokens = []
+            elif curent_tag == prev_tag and current_prefix == 'I':
+                chunk_tokens.append(token)
             prev_tag = curent_tag
-        if len(chunk_tokens) > 0:
+        if chunk_tokens:
             entities.append(' '.join(chunk_tokens))
             slots.append(prev_tag)
         return entities, slots

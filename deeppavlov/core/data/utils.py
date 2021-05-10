@@ -97,7 +97,6 @@ def simple_download(url: str, destination: Union[Path, str], headers: Optional[d
     if url.startswith('s3://'):
         return s3_download(url, str(destination))
 
-    chunk_size = 32 * 1024
     temporary = destination.with_suffix(destination.suffix + '.part')
 
     r = requests.get(url, stream=True, headers=headers)
@@ -114,6 +113,7 @@ def simple_download(url: str, destination: Union[Path, str], headers: Optional[d
         if downloaded != 0:
             log.warning(f'Found a partial download {temporary}')
         with tqdm(initial=downloaded, total=total_length, unit='B', unit_scale=True) as pbar:
+            chunk_size = 32 * 1024
             while not done:
                 if downloaded != 0:
                     log.warning(f'Download stopped abruptly, trying to resume from {downloaded} '
@@ -209,13 +209,13 @@ def ungzip(file_path: Union[Path, str], extract_path: Optional[Union[Path, str]]
         extract_path: Path where the file will be extracted.
 
     """
-    chunk_size = 16 * 1024
     file_path = Path(file_path)
     if extract_path is None:
         extract_path = file_path.with_suffix('')
     extract_path = Path(extract_path)
 
     with gzip.open(file_path, 'rb') as fin, extract_path.open('wb') as fout:
+        chunk_size = 16 * 1024
         while True:
             block = fin.read(chunk_size)
             if not block:
@@ -522,11 +522,11 @@ def get_all_elems_from_json(search_json: dict, search_key: str) -> list:
     """
     result = []
     if isinstance(search_json, dict):
-        for key in search_json:
+        for key, value in search_json.items():
             if key == search_key:
                 result.append(search_json[key])
             else:
-                result.extend(get_all_elems_from_json(search_json[key], search_key))
+                result.extend(get_all_elems_from_json(value, search_key))
     elif isinstance(search_json, list):
         for item in search_json:
             result.extend(get_all_elems_from_json(item, search_key))
@@ -554,10 +554,10 @@ def check_nested_dict_keys(check_dict: dict, keys: list) -> bool:
         False
 
     """
-    if isinstance(keys, list) and len(keys) > 0:
+    if isinstance(keys, list) and keys:
         element = check_dict
         for key in keys:
-            if isinstance(element, dict) and key in element.keys():
+            if isinstance(element, dict) and key in element:
                 element = element[key]
             else:
                 return False
@@ -580,22 +580,19 @@ def jsonify_data(data: Any) -> Any:
 
     """
     if isinstance(data, (list, tuple)):
-        result = [jsonify_data(item) for item in data]
+        return [jsonify_data(item) for item in data]
     elif isinstance(data, dict):
-        result = {}
-        for key in data.keys():
-            result[key] = jsonify_data(data[key])
+        return {key: jsonify_data(data[key]) for key in data.keys()}
     elif isinstance(data, np.ndarray):
-        result = data.tolist()
+        return data.tolist()
     elif isinstance(data, np.integer):
-        result = int(data)
+        return int(data)
     elif isinstance(data, np.floating):
-        result = float(data)
+        return float(data)
     elif callable(getattr(data, "to_serializable_dict", None)):
-        result = data.to_serializable_dict()
+        return data.to_serializable_dict()
     else:
-        result = data
-    return result
+        return data
 
 
 def chunk_generator(items_list: list, chunk_size: int) -> Generator[list, None, None]:

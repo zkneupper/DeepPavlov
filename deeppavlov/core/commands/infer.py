@@ -110,15 +110,12 @@ def predict_on_stream(config: Union[str, Path, dict],
 
     args_count = len(model.in_x)
     while True:
-        batch = list((l.strip() for l in islice(f, batch_size * args_count)))
+        batch = [l.strip() for l in islice(f, batch_size * args_count)]
 
         if not batch:
             break
 
-        args = []
-        for i in range(args_count):
-            args.append(batch[i::args_count])
-
+        args = [batch[i::args_count] for i in range(args_count)]
         res = model(*args)
         if len(model.out_params) == 1:
             res = [res]

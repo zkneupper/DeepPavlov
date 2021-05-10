@@ -185,8 +185,7 @@ class KerasClassificationModel(LRScheduledKerasModel):
         """
         features = self.check_input(texts)
 
-        metrics_values = self.model.train_on_batch(features, np.array(labels))
-        return metrics_values
+        return self.model.train_on_batch(features, np.array(labels))
 
     def __call__(self, data: List[List[np.ndarray]]) -> List[List[float]]:
         """
@@ -261,14 +260,13 @@ class KerasClassificationModel(LRScheduledKerasModel):
 
                 self.model = model
 
-                return None
             else:
                 self.model = self.init_model_from_scratch(model_name)
-                return None
         else:
             log.warning("No `load_path` is provided for {}".format(self.__class__.__name__))
             self.model = self.init_model_from_scratch(model_name)
-            return None
+
+        return None
 
     def compile(self, model: Model, optimizer_name: str, loss_name: str,
                 learning_rate: Optional[Union[float, List[float]]],
@@ -333,18 +331,13 @@ class KerasClassificationModel(LRScheduledKerasModel):
         Returns:
             None
         """
-        if not fname:
-            fname = self.save_path
-        else:
-            fname = Path(fname).resolve()
-
+        fname = self.save_path if not fname else Path(fname).resolve()
         if not fname.parent.is_dir():
             raise ConfigError("Provided save path is incorrect!")
-        else:
-            opt_path = f"{fname}_opt.json"
-            weights_path = f"{fname}.h5"
-            log.info(f"[saving model to {opt_path}]")
-            self.model.save_weights(weights_path)
+        opt_path = f"{fname}_opt.json"
+        weights_path = f"{fname}.h5"
+        log.info(f"[saving model to {opt_path}]")
+        self.model.save_weights(weights_path)
 
         # if model was loaded from one path and saved to another one
         # then change load_path to save_path for config
@@ -353,9 +346,12 @@ class KerasClassificationModel(LRScheduledKerasModel):
             self.opt["final_learning_rate"] = (K.eval(self.optimizer.lr) /
                                                (1. + K.eval(self.optimizer.decay) * self.batches_seen))
 
-        if self.opt.get("load_path") and self.opt.get("save_path"):
-            if self.opt.get("save_path") != self.opt.get("load_path"):
-                self.opt["load_path"] = str(self.opt["save_path"])
+        if (
+            self.opt.get("load_path")
+            and self.opt.get("save_path")
+            and self.opt.get("save_path") != self.opt.get("load_path")
+        ):
+            self.opt["load_path"] = str(self.opt["save_path"])
         save_json(self.opt, opt_path)
 
     # noinspection PyUnusedLocal
@@ -387,11 +383,15 @@ class KerasClassificationModel(LRScheduledKerasModel):
             output = Dense(input_projection_size, activation='relu')(output)
 
         outputs = []
-        for i in range(len(kernel_sizes_cnn)):
-            output_i = Conv1D(filters_cnn, kernel_size=kernel_sizes_cnn[i],
-                              activation=None,
-                              kernel_regularizer=l2(coef_reg_cnn),
-                              padding='same')(output)
+        for item in kernel_sizes_cnn:
+            output_i = Conv1D(
+                filters_cnn,
+                kernel_size=item,
+                activation=None,
+                kernel_regularizer=l2(coef_reg_cnn),
+                padding='same',
+            )(output)
+
             output_i = BatchNormalization()(output_i)
             output_i = Activation('relu')(output_i)
             output_i = GlobalMaxPooling1D()(output_i)
@@ -409,8 +409,7 @@ class KerasClassificationModel(LRScheduledKerasModel):
                        kernel_regularizer=l2(coef_reg_den))(output)
         output = BatchNormalization()(output)
         act_output = Activation(self.opt.get("last_layer_activation", "sigmoid"))(output)
-        model = Model(inputs=inp, outputs=act_output)
-        return model
+        return Model(inputs=inp, outputs=act_output)
 
     # noinspection PyUnusedLocal
     def dcnn_model(self, kernel_sizes_cnn: List[int], filters_cnn: List[int], dense_size: int,
@@ -460,8 +459,7 @@ class KerasClassificationModel(LRScheduledKerasModel):
                        kernel_regularizer=l2(coef_reg_den))(output)
         output = BatchNormalization()(output)
         act_output = Activation(self.opt.get("last_layer_activation", "sigmoid"))(output)
-        model = Model(inputs=inp, outputs=act_output)
-        return model
+        return Model(inputs=inp, outputs=act_output)
 
     # noinspection PyUnusedLocal
     def cnn_model_max_and_aver_pool(self, kernel_sizes_cnn: List[int], filters_cnn: int, dense_size: int,
@@ -494,11 +492,15 @@ class KerasClassificationModel(LRScheduledKerasModel):
             output = Dense(input_projection_size, activation='relu')(output)
 
         outputs = []
-        for i in range(len(kernel_sizes_cnn)):
-            output_i = Conv1D(filters_cnn, kernel_size=kernel_sizes_cnn[i],
-                              activation=None,
-                              kernel_regularizer=l2(coef_reg_cnn),
-                              padding='same')(output)
+        for item in kernel_sizes_cnn:
+            output_i = Conv1D(
+                filters_cnn,
+                kernel_size=item,
+                activation=None,
+                kernel_regularizer=l2(coef_reg_cnn),
+                padding='same',
+            )(output)
+
             output_i = BatchNormalization()(output_i)
             output_i = Activation('relu')(output_i)
             output_i_0 = GlobalMaxPooling1D()(output_i)
@@ -518,8 +520,7 @@ class KerasClassificationModel(LRScheduledKerasModel):
                        kernel_regularizer=l2(coef_reg_den))(output)
         output = BatchNormalization()(output)
         act_output = Activation(self.opt.get("last_layer_activation", "sigmoid"))(output)
-        model = Model(inputs=inp, outputs=act_output)
-        return model
+        return Model(inputs=inp, outputs=act_output)
 
     # noinspection PyUnusedLocal
     def bilstm_model(self, units_lstm: int, dense_size: int,
@@ -566,8 +567,7 @@ class KerasClassificationModel(LRScheduledKerasModel):
         output = Dense(self.n_classes, activation=None,
                        kernel_regularizer=l2(coef_reg_den))(output)
         act_output = Activation(self.opt.get("last_layer_activation", "sigmoid"))(output)
-        model = Model(inputs=inp, outputs=act_output)
-        return model
+        return Model(inputs=inp, outputs=act_output)
 
     # noinspection PyUnusedLocal
     def bilstm_bilstm_model(self, units_lstm_1: int, units_lstm_2: int, dense_size: int,
@@ -623,8 +623,7 @@ class KerasClassificationModel(LRScheduledKerasModel):
         output = Dense(self.n_classes, activation=None,
                        kernel_regularizer=l2(coef_reg_den))(output)
         act_output = Activation(self.opt.get("last_layer_activation", "sigmoid"))(output)
-        model = Model(inputs=inp, outputs=act_output)
-        return model
+        return Model(inputs=inp, outputs=act_output)
 
     # noinspection PyUnusedLocal
     def bilstm_cnn_model(self, units_lstm: int, kernel_sizes_cnn: List[int], filters_cnn: int, dense_size: int,
@@ -667,12 +666,15 @@ class KerasClassificationModel(LRScheduledKerasModel):
 
         output = Reshape(target_shape=(self.opt['text_size'], 2 * units_lstm))(output)
         outputs = []
-        for i in range(len(kernel_sizes_cnn)):
-            output_i = Conv1D(filters_cnn,
-                              kernel_size=kernel_sizes_cnn[i],
-                              activation=None,
-                              kernel_regularizer=l2(coef_reg_cnn),
-                              padding='same')(output)
+        for item in kernel_sizes_cnn:
+            output_i = Conv1D(
+                filters_cnn,
+                kernel_size=item,
+                activation=None,
+                kernel_regularizer=l2(coef_reg_cnn),
+                padding='same',
+            )(output)
+
             output_i = BatchNormalization()(output_i)
             output_i = Activation('relu')(output_i)
             output_i = GlobalMaxPooling1D()(output_i)
@@ -687,8 +689,7 @@ class KerasClassificationModel(LRScheduledKerasModel):
         output = Dense(self.n_classes, activation=None,
                        kernel_regularizer=l2(coef_reg_den))(output)
         act_output = Activation(self.opt.get("last_layer_activation", "sigmoid"))(output)
-        model = Model(inputs=inp, outputs=act_output)
-        return model
+        return Model(inputs=inp, outputs=act_output)
 
     # noinspection PyUnusedLocal
     def cnn_bilstm_model(self, kernel_sizes_cnn: List[int], filters_cnn: int, units_lstm: int, dense_size: int,
@@ -724,11 +725,15 @@ class KerasClassificationModel(LRScheduledKerasModel):
             output = Dense(input_projection_size, activation='relu')(output)
 
         outputs = []
-        for i in range(len(kernel_sizes_cnn)):
-            output_i = Conv1D(filters_cnn, kernel_size=kernel_sizes_cnn[i],
-                              activation=None,
-                              kernel_regularizer=l2(coef_reg_cnn),
-                              padding='same')(output)
+        for item in kernel_sizes_cnn:
+            output_i = Conv1D(
+                filters_cnn,
+                kernel_size=item,
+                activation=None,
+                kernel_regularizer=l2(coef_reg_cnn),
+                padding='same',
+            )(output)
+
             output_i = BatchNormalization()(output_i)
             output_i = Activation('relu')(output_i)
             output_i = MaxPooling1D()(output_i)
@@ -752,8 +757,7 @@ class KerasClassificationModel(LRScheduledKerasModel):
         output = Dense(self.n_classes, activation=None,
                        kernel_regularizer=l2(coef_reg_den))(output)
         act_output = Activation(self.opt.get("last_layer_activation", "sigmoid"))(output)
-        model = Model(inputs=inp, outputs=act_output)
-        return model
+        return Model(inputs=inp, outputs=act_output)
 
     # noinspection PyUnusedLocal
     def bilstm_self_add_attention_model(self, units_lstm: int, dense_size: int, self_att_hid: int, self_att_out: int,
@@ -806,8 +810,7 @@ class KerasClassificationModel(LRScheduledKerasModel):
         output = Dense(self.n_classes, activation=None,
                        kernel_regularizer=l2(coef_reg_den))(output)
         act_output = Activation(self.opt.get("last_layer_activation", "sigmoid"))(output)
-        model = Model(inputs=inp, outputs=act_output)
-        return model
+        return Model(inputs=inp, outputs=act_output)
 
     # noinspection PyUnusedLocal
     def bilstm_self_mult_attention_model(self, units_lstm: int, dense_size: int, self_att_hid: int, self_att_out: int,
@@ -860,8 +863,7 @@ class KerasClassificationModel(LRScheduledKerasModel):
         output = Dense(self.n_classes, activation=None,
                        kernel_regularizer=l2(coef_reg_den))(output)
         act_output = Activation(self.opt.get("last_layer_activation", "sigmoid"))(output)
-        model = Model(inputs=inp, outputs=act_output)
-        return model
+        return Model(inputs=inp, outputs=act_output)
 
     # noinspection PyUnusedLocal
     def bigru_model(self, units_gru: int, dense_size: int,
@@ -908,8 +910,7 @@ class KerasClassificationModel(LRScheduledKerasModel):
         output = Dense(self.n_classes, activation=None,
                        kernel_regularizer=l2(coef_reg_den))(output)
         act_output = Activation(self.opt.get("last_layer_activation", "sigmoid"))(output)
-        model = Model(inputs=inp, outputs=act_output)
-        return model
+        return Model(inputs=inp, outputs=act_output)
 
     # noinspection PyUnusedLocal
     def bigru_with_max_aver_pool_model(self, units_gru: int, dense_size: int,
@@ -956,5 +957,4 @@ class KerasClassificationModel(LRScheduledKerasModel):
         output = Dense(self.n_classes, activation=None,
                        kernel_regularizer=l2(coef_reg_den))(output)
         act_output = Activation(self.opt.get("last_layer_activation", "sigmoid"))(output)
-        model = Model(inputs=inp, outputs=act_output)
-        return model
+        return Model(inputs=inp, outputs=act_output)

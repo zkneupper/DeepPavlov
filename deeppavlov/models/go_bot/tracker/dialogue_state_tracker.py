@@ -31,12 +31,11 @@ class DialogueStateTracker(FeaturizedTracker):
     def get_current_knowledge(self) -> DSTKnowledge:
         state_features = self.get_features()
         context_features = self.calc_context_features()
-        knowledge = DSTKnowledge(self.prev_action,
+        return DSTKnowledge(self.prev_action,
                                  state_features, context_features,
                                  self.api_call_id,
                                  self.n_actions,
                                  self.calc_action_mask())
-        return knowledge
 
     def __init__(self,
                  slot_names,
@@ -199,7 +198,7 @@ class DialogueStateTracker(FeaturizedTracker):
             result_matches_state = all(v == db_result.get(s)
                                        for s, v in matching_items
                                        if v != 'dontcare') * 1.
-        context_features = np.array([
+        return np.array([
             bool(current_db_result) * 1.,
             (current_db_result == {}) * 1.,
             (db_result is None) * 1.,
@@ -207,7 +206,6 @@ class DialogueStateTracker(FeaturizedTracker):
             (db_result == {}) * 1.,
             result_matches_state
         ], dtype=np.float32)
-        return context_features
 
     def _update_db_result(self):
         if self.current_db_result is not None:

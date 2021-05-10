@@ -426,10 +426,9 @@ class LanguageModel(object):
         # DEFINE next_token_id and *_reverse placeholders for the gold input
         def _get_next_token_placeholders(suffix):
             name = 'next_token_id' + suffix
-            id_placeholder = tf.placeholder(DTYPE_INT,
+            return tf.placeholder(DTYPE_INT,
                                             shape=(batch_size, unroll_steps),
                                             name=name)
-            return id_placeholder
 
         # get the window and weight placeholders
         self.next_token_id = _get_next_token_placeholders('')

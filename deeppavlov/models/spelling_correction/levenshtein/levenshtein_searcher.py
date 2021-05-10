@@ -85,7 +85,7 @@ class LevenshteinSearcher:
         # agenda[self.agenda_key("", 0, trie.root)] = (0.0, 0.0, h)
         key, value = ("", 0, trie.root), (0.0, 0.0, h)
         agenda.add((key, value))
-        answer = dict()
+        answer = {}
         k = 0
         # очередь с приоритетом с промежуточными результатами
         while len(agenda) > 0:
@@ -340,8 +340,7 @@ class SegmentTransducer:
         up_costs = self.operation_costs.get(up, None)
         if up_costs is None:
             return np.inf
-        cost = up_costs.get(low, np.inf)
-        return cost
+        return up_costs.get(low, np.inf)
 
     def inverse(self):
         """
@@ -418,9 +417,9 @@ class SegmentTransducer:
         costs, backtraces = self._fill_levenshtein_table(first, second,
                                                          update_func, add_pred, clear_pred,
                                                          threshold=threshold)
-        result = self._backtraces_to_transductions(first, second,
-                                                   backtraces, threshold, return_cost=True)
-        return result
+        return self._backtraces_to_transductions(
+            first, second, backtraces, threshold, return_cost=True
+        )
 
     def lower_transductions(self, word, max_cost, return_cost=True):
         """
@@ -456,7 +455,7 @@ class SegmentTransducer:
 
     def lower(self, word, max_cost, return_cost=True):
         transductions = self.lower_transductions(word, max_cost, return_cost=True)
-        answer = dict()
+        answer = {}
         for transduction, cost in transductions:
             low = "".join(elem[1] for elem in transductions)
             curr_cost = answer.get(low, None)
@@ -567,7 +566,7 @@ class SegmentTransducer:
         for up, costs in self.operation_costs.items():
             for low, cost in costs.items():
                 if low not in _reversed_operation_costs:
-                    _reversed_operation_costs[low] = dict()
+                    _reversed_operation_costs[low] = {}
                 _reversed_operation_costs[low][up] = cost
         self._reversed_operation_costs = _reversed_operation_costs
 
@@ -657,7 +656,7 @@ class SegmentTransducer:
         """
         queue = list(initial)
         final = initial
-        while len(queue) > 0:
+        while queue:
             transduction, cost = queue[0]
             queue = queue[1:]
             for string, string_cost in self.operation_costs[""].items():
@@ -672,8 +671,7 @@ class SegmentTransducer:
         """
         sets 1.0 cost for every replacement, insertion, deletion and transposition
         """
-        self.operation_costs = dict()
-        self.operation_costs[""] = {c: 1.0 for c in list(self.alphabet) + [' ']}
+        self.operation_costs = {"": {c: 1.0 for c in list(self.alphabet) + [' ']}}
         for a in self.alphabet:
             current_costs = {c: 1.0 for c in self.alphabet}
             current_costs[a] = 0.0

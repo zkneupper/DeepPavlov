@@ -50,8 +50,12 @@ class UbuntuDSTC7MTReader(DatasetReader):
         self.num_responses = num_responses
         self.np_random = np.random.RandomState(seed)
 
-        dataset = {}
-        dataset["train"] = self._create_dialog_iter(Path(data_path) / 'ubuntu_train_subtask_1.json', "train")
+        dataset = {
+            "train": self._create_dialog_iter(
+                Path(data_path) / 'ubuntu_train_subtask_1.json', "train"
+            )
+        }
+
         dataset["valid"] = self._create_dialog_iter(Path(data_path) / 'ubuntu_dev_subtask_1.json', "valid")
         dataset["test"] = self._create_dialog_iter(Path(data_path) / 'ubuntu_test_subtask_1.json', "test")
         return dataset
@@ -133,9 +137,8 @@ class UbuntuDSTC7MTReader(DatasetReader):
         """
         if padding == "post":
             sent_list = context
-            res = sent_list + (self.num_turns - len(sent_list)) * \
+            return sent_list + (self.num_turns - len(sent_list)) * \
                   [''] if len(sent_list) < self.num_turns else sent_list[:self.num_turns]
-            return res
         elif padding == "pre":
             sent_list = context[-(self.num_turns + 1):-1]
             if len(sent_list) <= self.num_turns:

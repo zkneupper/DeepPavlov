@@ -217,12 +217,11 @@ class MorphoTagger(KerasModel):
         highway_input = Lambda(K.max, arguments={"axis": -2})(conv_output)
         if self.intermediate_dropout > 0.0:
             highway_input = Dropout(self.intermediate_dropout)(highway_input)
-        for i in range(self.char_highway_layers - 1):
+        for _ in range(self.char_highway_layers - 1):
             highway_input = Highway(activation="relu")(highway_input)
             if self.highway_dropout > 0.0:
                 highway_input = Dropout(self.highway_dropout)(highway_input)
-        highway_output = Highway(activation="relu")(highway_input)
-        return highway_output
+        return Highway(activation="relu")(highway_input)
 
     def _build_basic_network(self, word_outputs):
         """

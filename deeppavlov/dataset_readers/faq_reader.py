@@ -51,9 +51,4 @@ class FaqDatasetReader(DatasetReader):
 
         train_xy_tuples = [(x[i].strip(), y[i].strip()) for i in range(len(x))]
 
-        dataset = dict()
-        dataset["train"] = train_xy_tuples
-        dataset["valid"] = []
-        dataset["test"] = []
-
-        return dataset
+        return {"train": train_xy_tuples, "valid": [], "test": []}

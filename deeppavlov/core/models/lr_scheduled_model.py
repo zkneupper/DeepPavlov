@@ -70,7 +70,7 @@ class DecayScheduler:
         self.nb, self.extra = num_it, extra
         self.start_val, self.end_val = start_val, end_val
         self.iters = 0
-        if self.end_val is None and not (self.dec_type in [1, 4]):
+        if self.end_val is None and self.dec_type not in [1, 4]:
             self.end_val = 0
         if self.dec_type == DecayType.ONECYCLE:
             self.cycle_nb = math.ceil(self.nb / 2)
@@ -103,11 +103,10 @@ class DecayScheduler:
             if self.iters > self.cycle_nb:
                 # decaying from end_val to start_val for cycle_nb steps
                 pct = 1 - (self.iters - self.cycle_nb) / self.cycle_nb
-                return self.start_val * (1 + pct * (self.div - 1))
             else:
                 # raising from start_val to end_val for cycle_nb steps
                 pct = self.iters / self.cycle_nb
-                return self.start_val * (1 + pct * (self.div - 1))
+            return self.start_val * (1 + pct * (self.div - 1))
         elif self.dec_type == DecayType.TRAPEZOID:
             if self.iters > 0.6 * self.nb:
                 # decaying from end_val to start_val for 4/10 * nb steps

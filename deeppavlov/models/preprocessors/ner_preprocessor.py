@@ -150,9 +150,9 @@ class NerVocab(Estimator):
             return
 
         if self.char_level:
-            items = set([char for sent in sents for word in sent for char in word])
+            items = {char for sent in sents for word in sent for char in word}
         else:
-            items = set([word for sent in sents for word in sent])
+            items = {word for sent in sents for word in sent}
         items = ["<UNK>", "<PAD>"] + list(items)
 
         self._t2i = {k: v for v, k in enumerate(items)}
@@ -172,21 +172,21 @@ class NerVocab(Estimator):
 
         batch_size = len(tokens)
 
-        if not self.char_level:
-            max_len = max([len(seq) for seq in tokens])
-            padded_batch = np.full((batch_size, max_len), self._t2i["<PAD>"])
-            for i, seq in enumerate(tokens):
-                padded_batch[i, :len(seq)] = seq
-        else:
-            max_len_seq = max([len(seq) for seq in tokens])
+        if self.char_level:
+            max_len_seq = max(len(seq) for seq in tokens)
             if max_len_seq == 0:
                 max_len_sub_seq = 0
             else:
-                max_len_sub_seq = max([len(sub_seq) for seq in tokens for sub_seq in seq])
+                max_len_sub_seq = max(len(sub_seq) for seq in tokens for sub_seq in seq)
             padded_batch = np.full((batch_size, max_len_seq, max_len_sub_seq), self._t2i["<PAD>"])
             for i, seq in enumerate(tokens):
                 for j, sub_seq in enumerate(seq):
                     padded_batch[i, j, :len(sub_seq)] = sub_seq
+        else:
+            max_len = max(len(seq) for seq in tokens)
+            padded_batch = np.full((batch_size, max_len), self._t2i["<PAD>"])
+            for i, seq in enumerate(tokens):
+                padded_batch[i, :len(seq)] = seq
         return padded_batch
 
     def __call__(self, sents, **kwargs):
@@ -195,9 +195,7 @@ class NerVocab(Estimator):
         else:
             sents_ind = [[[self._t2i[char] if char in self._t2i else 0 for char in word] for word in sent] for sent in
                          sents]
-        padded_sents = self.pad_batch(sents_ind)
-
-        return padded_sents
+        return self.pad_batch(sents_ind)
 
     def load(self, *args, **kwargs):
         log.info("[loading vocabulary from {}]".format(self.load_path))

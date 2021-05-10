@@ -164,8 +164,7 @@ def TemporalDropout(inputs, dropout=0.0):
     tiling_shape = [1, 1, K.shape(inputs)[2]] + [1] * (K.ndim(inputs) - 3)
     inputs_mask = Lambda(K.tile, arguments={"n": tiling_shape},
                          output_shape=inputs._keras_shape[1:])(inputs_mask)
-    answer = Multiply()([inputs, inputs_mask])
-    return answer
+    return Multiply()([inputs, inputs_mask])
 
 
 def positions_func(inputs, pad=0):

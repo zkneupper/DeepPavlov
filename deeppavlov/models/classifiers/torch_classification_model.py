@@ -146,11 +146,14 @@ class TorchTextClassificationModel(TorchModel):
         """
         super().process_event(event_name, data)
 
-        if event_name == "after_epoch" and self.opt.get("lr_decay_every_n_epochs", None) is not None:
-            if self.epochs_done % self.opt["lr_decay_every_n_epochs"] == 0:
-                log.info(f"----------Current LR is decreased in 10 times----------")
-                for param_group in self.optimizer.param_groups:
-                    param_group['lr'] = param_group['lr'] / 10
+        if (
+            event_name == "after_epoch"
+            and self.opt.get("lr_decay_every_n_epochs", None) is not None
+            and self.epochs_done % self.opt["lr_decay_every_n_epochs"] == 0
+        ):
+            log.info(f"----------Current LR is decreased in 10 times----------")
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = param_group['lr'] / 10
 
     def train_on_batch(self, texts: List[List[np.ndarray]], labels: list) -> Union[float, List[float]]:
         """Train the model on the given batch.
@@ -193,9 +196,13 @@ class TorchTextClassificationModel(TorchModel):
         Returns:
             torch.models.Model: instance of torch Model
         """
-        model = ShallowAndWideCnn(n_classes=self.opt["n_classes"], embedding_size=self.opt["embedding_size"],
-                                  kernel_sizes_cnn=kernel_sizes_cnn, filters_cnn=filters_cnn,
-                                  dense_size=dense_size, dropout_rate=dropout_rate,
-                                  embedded_tokens=self.opt["embedded_tokens"],
-                                  vocab_size=self.opt["vocab_size"])
-        return model
+        return ShallowAndWideCnn(
+            n_classes=self.opt["n_classes"],
+            embedding_size=self.opt["embedding_size"],
+            kernel_sizes_cnn=kernel_sizes_cnn,
+            filters_cnn=filters_cnn,
+            dense_size=dense_size,
+            dropout_rate=dropout_rate,
+            embedded_tokens=self.opt["embedded_tokens"],
+            vocab_size=self.opt["vocab_size"],
+        )

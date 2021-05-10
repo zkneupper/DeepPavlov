@@ -127,7 +127,7 @@ class TfidfWeightedEmbedder(Component):
         Returns:
             vocabulary
         """
-        tags_vocab = dict()
+        tags_vocab = {}
         with open(load_path, 'r') as f:
             lines = f.readlines()
             f.close()
@@ -149,7 +149,7 @@ class TfidfWeightedEmbedder(Component):
         Returns:
             vocabulary
         """
-        counter_vocab = dict()
+        counter_vocab = {}
         with open(load_path, 'r') as f:
             lines = f.readlines()
             f.close()
@@ -258,8 +258,7 @@ class TfidfWeightedEmbedder(Component):
         """
         log_count = np.log(count) / np.log(self.log_base)
         log_base_count = np.log(self.idf_base_count) / np.log(self.log_base)
-        weight = max(1.0 / (1.0 + log_count - log_base_count), self.min_idf_weight)
-        return weight
+        return max(1.0 / (1.0 + log_count - log_base_count), self.min_idf_weight)
 
     def _tags_encode(self, tokens: List[str], tags: List[str], mean: bool) -> Union[List[np.ndarray], np.ndarray]:
         """

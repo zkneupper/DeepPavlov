@@ -59,20 +59,17 @@ class MultiTaskIterator:
         }
 
     def _extract_data_type(self, data_type):
-        dataset_part = {}
-        for task, iterator in self.task_iterators.items():
-            dataset_part[task] = getattr(iterator, data_type)
-        return dataset_part
+        return {
+            task: getattr(iterator, data_type)
+            for task, iterator in self.task_iterators.items()
+        }
 
     @staticmethod
     def _unite_dataset_parts(*dataset_parts):
         united = {}
         for ds_part in dataset_parts:
             for task, data in ds_part.items():
-                if task not in united:
-                    united[task] = data
-                else:
-                    united[task] = united[task] + data
+                united[task] = data if task not in united else united[task] + data
         return united
 
     def gen_batches(self, batch_size: int, data_type: str = 'train',
@@ -91,7 +88,10 @@ class MultiTaskIterator:
             Element of inputs or outputs is a tuple which elements are x values of merged tasks in the order
             tasks are present in `tasks` argument of `__init__` method.
         """
-        max_task_data_len = max([len(iter_.data[data_type]) for iter_ in self.task_iterators.values()])
+        max_task_data_len = max(
+            len(iter_.data[data_type]) for iter_ in self.task_iterators.values()
+        )
+
 
         size_of_last_batch = max_task_data_len % batch_size
         if size_of_last_batch == 0:
@@ -121,7 +121,10 @@ class MultiTaskIterator:
             a tuple of all inputs for a data type and all expected outputs for a data type
         """
         max_task_data_len = max(
-            [len(iter_.get_instances(data_type)[0]) for iter_ in self.task_iterators.values()])
+            len(iter_.get_instances(data_type)[0])
+            for iter_ in self.task_iterators.values()
+        )
+
         x_instances = []
         y_instances = []
         for task_name, iter_ in self.task_iterators.items():
@@ -131,9 +134,8 @@ class MultiTaskIterator:
             y *= n_repeats
             x_instances.append(x[:max_task_data_len])
             y_instances.append(y[:max_task_data_len])
-            
-        instances = (tuple(zip(*x_instances)), tuple(zip(*y_instances)))
-        return instances
+
+        return tuple(zip(*x_instances)), tuple(zip(*y_instances))
 
 
 class RepeatBatchGenerator:

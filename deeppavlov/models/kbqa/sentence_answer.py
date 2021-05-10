@@ -36,7 +36,11 @@ def find_tokens(tokens, node, not_inc_node):
 def find_inflect_dict(sent_nodes):
     inflect_dict = {}
     for node in sent_nodes:
-        if node.dep_ == "aux" and node.tag_ == "VBD" and (node.head.tag_ == "VBP" or node.head.tag_ == "VB"):
+        if (
+            node.dep_ == "aux"
+            and node.tag_ == "VBD"
+            and node.head.tag_ in ["VBP", "VB"]
+        ):
             new_verb = node.head._.inflect("VBD")
             inflect_dict[node.head.text] = new_verb
             inflect_dict[node.text] = ""

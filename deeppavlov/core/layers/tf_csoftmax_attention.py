@@ -163,7 +163,7 @@ def attention_gen_block(hidden_for_sketch, hidden_for_attn_alignment, key, atten
         sketches = [tf.zeros(shape=[batch_size, hidden_size], dtype=tf.float32)]
         aligned_hiddens = []
         cum_att = tf.zeros(shape=[batch_size, num_tokens])  # cumulative attention
-        for i in range(attention_depth):
+        for _ in range(attention_depth):
             sketch, cum_att_, aligned_hidden = attention_gen_step(hidden_for_sketch, hidden_for_attn_alignment,
                                                                   sketches[-1], key, cum_att)
             sketches.append(sketch)  # sketch
@@ -244,7 +244,7 @@ def attention_bah_block(hidden_for_sketch, hidden_for_attn_alignment, attention_
         sketches = [tf.zeros(shape=[batch_size, hidden_size], dtype=tf.float32)]
         aligned_hiddens = []
         cum_att = tf.zeros(shape=[batch_size, num_tokens])  # cumulative attention
-        for i in range(attention_depth):
+        for _ in range(attention_depth):
             sketch, cum_att_, aligned_hidden = attention_bah_step(hidden_for_sketch, hidden_for_attn_alignment,
                                                                   sketches[-1], cum_att)
             sketches.append(sketch)  # sketch

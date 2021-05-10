@@ -66,8 +66,7 @@ class SiameseModel(NNModel):
         for sample in samples_generator:
             self._append_sample_to_batch_buffer(sample, buf)
         b = self._make_batch(buf)
-        loss = self._train_on_batch(b, y)
-        return loss
+        return self._train_on_batch(b, y)
 
     def __call__(self, samples_generator: Iterable[List[np.ndarray]]) -> Union[np.ndarray, List[str]]:
         """
@@ -91,10 +90,7 @@ class SiameseModel(NNModel):
                     yp = self._predict_on_batch(b)
                     y_pred += list(yp)
                 lenb = len(buf) % self.batch_size
-                if lenb != 0:
-                    buf = buf[-lenb:]
-                else:
-                    buf = []
+                buf = buf[-lenb:] if lenb != 0 else []
         if len(buf) != 0:
             b = self._make_batch(buf)
             yp = self._predict_on_batch(b)

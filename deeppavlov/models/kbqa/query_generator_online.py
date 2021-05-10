@@ -124,7 +124,14 @@ class QueryGeneratorOnline(QueryGeneratorBase):
         log.debug(f"rel_variables {rel_variables}, filter_rel_variables: {filter_rel_variables}")
         log.debug(f"rels_list_for_filter: {rels_list_for_filter}")
         log.debug(f"rels_list_for_fill: {rels_list_for_fill}")
-        rels_from_query = list(set([triplet[1] for triplet in query_triplets if triplet[1].startswith('?')]))
+        rels_from_query = list(
+            {
+                triplet[1]
+                for triplet in query_triplets
+                if triplet[1].startswith('?')
+            }
+        )
+
         if "count" in query:
             answer_ent = re.findall("as (\?[\S]+)", query)
         else:
@@ -176,11 +183,21 @@ class QueryGeneratorOnline(QueryGeneratorBase):
 
         candidate_outputs = []
         for combs, candidate_output in zip(all_combs_list, candidate_outputs_list):
-            candidate_output = [output for output in candidate_output
-                                if (all([filter_value in output[filter_var[1:]]["value"]
-                                         for filter_var, filter_value in property_types.items()])
-                                    and all([not output[ent[1:]]["value"].startswith("http://www.wikidata.org/value")
-                                             for ent in answer_ent]))]
+            candidate_output = [
+                output
+                for output in candidate_output
+                if all(
+                    filter_value in output[filter_var[1:]]["value"]
+                    for filter_var, filter_value in property_types.items()
+                )
+                and all(
+                    not output[ent[1:]]["value"].startswith(
+                        "http://www.wikidata.org/value"
+                    )
+                    for ent in answer_ent
+                )
+            ]
+
             candidate_outputs += [combs[2][:-1] + [output[var[1:]]["value"] for var in out_vars] + [confidence]
                                   for output in candidate_output]
 

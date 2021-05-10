@@ -35,9 +35,4 @@ class LineReader(DatasetReader):
         with open(data_path) as f:
             content = f.readlines()
 
-        dataset = dict()
-        dataset["train"] = [(line,) for line in content]
-        dataset["valid"] = []
-        dataset["test"] = []
-
-        return dataset
+        return {"train": [(line,) for line in content], "valid": [], "test": []}

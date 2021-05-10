@@ -36,25 +36,28 @@ class TorchtextClassificationDataReader(DatasetReader):
              splits: list = ["train", "valid", "test"], valid_portion: Optional[float] = None,
              split_seed: int = 42, *args, **kwargs) -> dict:
 
-        if hasattr(torch_texts, dataset_title) and callable(getattr(torch_texts, dataset_title)):
-            log.info(f"Dataset {dataset_title} is used as an attribute of `torchtext.datasets`.")
-            _text = torchtext.data.RawField()
-            _label = torchtext.data.RawField()
-            data_splits = getattr(torch_texts, dataset_title).splits(_text, _label, root=data_path)
-            assert len(data_splits) == len(splits)
-            data_splits = dict(zip(splits, data_splits))
-
-            if "valid" not in splits and valid_portion is not None:
-                log.info("Valid not in `splits` and `valid_portion` is given. Split `train` to `train` and `valid`")
-                data_splits["train"], data_splits["valid"] = data_splits["train"].split(
-                    1 - valid_portion, random_state=random.seed(split_seed))
-        else:
+        if not hasattr(torch_texts, dataset_title) or not callable(
+            getattr(torch_texts, dataset_title)
+        ):
             raise NotImplementedError(f"Dataset {dataset_title} was not found.")
 
+        log.info(f"Dataset {dataset_title} is used as an attribute of `torchtext.datasets`.")
+        _text = torchtext.data.RawField()
+        _label = torchtext.data.RawField()
+        data_splits = getattr(torch_texts, dataset_title).splits(_text, _label, root=data_path)
+        assert len(data_splits) == len(splits)
+        data_splits = dict(zip(splits, data_splits))
+
+        if "valid" not in splits and valid_portion is not None:
+            log.info("Valid not in `splits` and `valid_portion` is given. Split `train` to `train` and `valid`")
+            data_splits["train"], data_splits["valid"] = data_splits["train"].split(
+                1 - valid_portion, random_state=random.seed(split_seed))
         data = {}
         for data_field in data_splits:
-            data[data_field] = []
-            for sample in data_splits[data_field].examples:
-                data[data_field].append((vars(sample)["text"], vars(sample)["label"]))
+            data[data_field] = [
+                (vars(sample)["text"], vars(sample)["label"])
+                for sample in data_splits[data_field].examples
+            ]
+
             log.info(f"For field {data_field} found {len(data[data_field])} samples.")
         return data

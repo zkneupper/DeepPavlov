@@ -70,12 +70,12 @@ class BoolqaReader(DatasetReader):
             data_path.mkdir(parents=True)
 
         download_decompress(self.url, data_path)
-        dataset = {}
-
-        for filename in ['train.jsonl', 'valid.jsonl']:
-            dataset[filename.split('.')[0]] = self._build_data(language, data_path / filename)
-
-        return dataset
+        return {
+            filename.split('.')[0]: self._build_data(
+                language, data_path / filename
+            )
+            for filename in ['train.jsonl', 'valid.jsonl']
+        }
 
     @staticmethod
     def _build_data(ln: str, data_path: Path) -> List[Tuple[Tuple[str, str], int]]:
@@ -84,11 +84,9 @@ class BoolqaReader(DatasetReader):
         with open(data_path, 'r') as f:
             for line in f:
                 jline = json.loads(line)
-                if ln == 'ru':
-                    if 'label' in jline:
-                        data[jline['question'], jline['passage']] = int(jline['label'])
-                if ln == 'en':
-                    if 'answer' in jline:
-                        data[jline['question'], jline['passage']] = int(jline['answer'])
+                if ln == 'ru' and 'label' in jline:
+                    data[jline['question'], jline['passage']] = int(jline['label'])
+                if ln == 'en' and 'answer' in jline:
+                    data[jline['question'], jline['passage']] = int(jline['answer'])
 
         return list(data.items())

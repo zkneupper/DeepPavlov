@@ -86,14 +86,20 @@ class TFModel(NNModel, metaclass=TfModelMeta):
     def _get_saveable_variables(exclude_scopes=tuple()):
         # noinspection PyProtectedMember
         all_vars = variables._all_saveable_objects()
-        vars_to_train = [var for var in all_vars if all(sc not in var.name for sc in exclude_scopes)]
-        return vars_to_train
+        return [
+            var
+            for var in all_vars
+            if all(sc not in var.name for sc in exclude_scopes)
+        ]
 
     @staticmethod
     def _get_trainable_variables(exclude_scopes=tuple()):
         all_vars = tf.global_variables()
-        vars_to_train = [var for var in all_vars if all(sc not in var.name for sc in exclude_scopes)]
-        return vars_to_train
+        return [
+            var
+            for var in all_vars
+            if all(sc not in var.name for sc in exclude_scopes)
+        ]
 
     def get_train_op(self,
                      loss,

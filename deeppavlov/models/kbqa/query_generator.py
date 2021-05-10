@@ -118,9 +118,10 @@ class QueryGenerator(QueryGeneratorBase):
         log.debug(f"(query_parser)query_triplets: {query_triplets}")
         query_triplets = [triplet.split(' ')[:3] for triplet in query_triplets]
         query_sequence_dict = {num: triplet for num, triplet in zip(query_seq_num, query_triplets)}
-        query_sequence = []
-        for i in range(1, max(query_seq_num) + 1):
-            query_sequence.append(query_sequence_dict[i])
+        query_sequence = [
+            query_sequence_dict[i] for i in range(1, max(query_seq_num) + 1)
+        ]
+
         triplet_info_list = [("forw" if triplet[2].startswith('?') else "backw", search_source, rel_type)
                              for search_source, triplet, rel_type in zip(rels_for_search, query_triplets, rel_types) if
                              search_source != "do_not_rank"]
@@ -210,8 +211,16 @@ class QueryGenerator(QueryGeneratorBase):
                                             tuple(candidate_output[1:-2]))].append(candidate_output[-2:])
                 candidate_outputs = []
                 for (candidate_entity_comb, candidate_rel_comb), candidate_output in candidate_outputs_dict.items():
-                    candidate_outputs.append(list(candidate_rel_comb) +
-                                             [tuple([ans for ans, conf in candidate_output]), candidate_output[0][1]])
+                    candidate_outputs.append(
+                        (
+                            list(candidate_rel_comb)
+                            + [
+                                tuple(ans for ans, conf in candidate_output),
+                                candidate_output[0][1],
+                            ]
+                        )
+                    )
+
             else:
                 candidate_outputs = [output[1:] for output in candidate_outputs]
         log.debug(f"(query_parser)loop time: {datetime.datetime.now() - start_time}")

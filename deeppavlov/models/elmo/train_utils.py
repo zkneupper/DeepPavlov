@@ -86,9 +86,7 @@ def summary_gradient_updates(grads, opt, lr):
 
     # strategy:
     # make a dict of variable name -> [variable, grad, adagrad slot]
-    vars_grads = {}
-    for v in tf.trainable_variables():
-        vars_grads[v.name] = [v, None, None]
+    vars_grads = {v.name: [v, None, None] for v in tf.trainable_variables()}
     for g, v in grads:
         vars_grads[v.name][1] = g
         vars_grads[v.name][2] = opt.get_slot(v, 'accumulator')
@@ -177,10 +175,7 @@ def clip_grads(grads, options, do_summaries, global_step):
             clipped_tensors, g_norm = tf.clip_by_global_norm(
                 grad_tensors, scaled_val)
 
-        ret = []
-        for t, (g, v) in zip(clipped_tensors, grad_and_vars):
-            ret.append((t, v))
-
+        ret = [(t, v) for t, (g, v) in zip(clipped_tensors, grad_and_vars)]
         return ret, so
 
     all_clip_norm_val = options['all_clip_norm_val']

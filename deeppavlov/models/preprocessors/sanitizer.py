@@ -51,10 +51,10 @@ class Sanitizer(Component):
         return sanitized_batch
 
     def replace_nums(self, tokens_batch):
-        sanitized_batch = []
-        for utterance in tokens_batch:
-            sanitized_batch.append([re.sub('[0-9]', '1', token) for token in utterance])
-        return sanitized_batch
+        return [
+            [re.sub('[0-9]', '1', token) for token in utterance]
+            for utterance in tokens_batch
+        ]
 
     def __call__(self, tokens_batch, **kwargs):
         if self.filter_diacritical:

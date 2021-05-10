@@ -31,7 +31,4 @@ class CharSplitter(Component):
 
     @overrides
     def __call__(self, batch, *args, **kwargs):
-        char_batch = []
-        for tokens_sequence in batch:
-            char_batch.append([list(tok) for tok in tokens_sequence])
-        return char_batch
+        return [[list(tok) for tok in tokens_sequence] for tokens_sequence in batch]

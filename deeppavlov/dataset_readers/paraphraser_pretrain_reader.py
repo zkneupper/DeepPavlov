@@ -39,8 +39,7 @@ class ParaphraserPretrainReader(DatasetReader):
         test_fname = data_path / 'paraphraser_pretrain_val.json'
         train_data = self.build_data(train_fname)
         test_data = self.build_data(test_fname)
-        dataset = {"train": train_data, "valid": test_data, "test": test_data}
-        return dataset
+        return {"train": train_data, "valid": test_data, "test": test_data}
 
     def int_class(self, str_y):
         if str_y == '-1':

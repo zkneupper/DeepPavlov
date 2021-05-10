@@ -177,30 +177,28 @@ class FeaturizedTracker(TrackerInterface):
             Returns:
                 the dict containing info on all the stories used
             """
-            story_f = open(story_path, 'r')
-            stories_li = []
-            curr_story = None
-            for line in story_f:
-                line = line.strip()
-                if not line: continue;
-                if line.startswith("#"):
-                    if curr_story is not None:
-                        stories_li.append(curr_story)
-                    story_name = line.strip('#').strip()
-                    curr_story = {"story": story_name, "steps": []}
-                elif line.startswith("*"):
-                    # user turn
-                    step = {"intent": line.strip('*').strip()}
-                    curr_story["steps"].append(step)
-                elif line.startswith('-'):
-                    # system turn
-                    step = {"action": line.strip('-').strip()}
-                    curr_story["steps"].append(step)
-            if curr_story is not None:
-                stories_li.append(curr_story)
-            story_f.close()
-            stories_di = {"stories": stories_li}
-            return stories_di
+            with open(story_path, 'r') as story_f:
+                stories_li = []
+                curr_story = None
+                for line in story_f:
+                    line = line.strip()
+                    if not line: continue;
+                    if line.startswith("#"):
+                        if curr_story is not None:
+                            stories_li.append(curr_story)
+                        story_name = line.strip('#').strip()
+                        curr_story = {"story": story_name, "steps": []}
+                    elif line.startswith("*"):
+                        # user turn
+                        step = {"intent": line.strip('*').strip()}
+                        curr_story["steps"].append(step)
+                    elif line.startswith('-'):
+                        # system turn
+                        step = {"action": line.strip('-').strip()}
+                        curr_story["steps"].append(step)
+                if curr_story is not None:
+                    stories_li.append(curr_story)
+            return {"stories": stories_li}
 
         stories_md_path = expand_path(stories_yml_path)
         stories_yml_di = read_md_story(stories_md_path)
@@ -264,7 +262,8 @@ class FeaturizedTracker(TrackerInterface):
         Returns:
             the slots acquired from the passed form
         """
-        acquired_slots = [slot_name
-                          for slot_name, slot_info_li in form.items()
-                          if slot_info_li and slot_info_li[0].get("type", '') == "from_entity"]
-        return acquired_slots
+        return [
+            slot_name
+            for slot_name, slot_info_li in form.items()
+            if slot_info_li and slot_info_li[0].get("type", '') == "from_entity"
+        ]

@@ -121,7 +121,7 @@ def check_md5(url: str, dest_paths: List[Path], headers: Optional[dict] = None) 
 
     for base_path in not_done:
         log.info(f'Copying data from {done} to {base_path}')
-        for p in expected.keys():
+        for p in expected:
             shutil.copy(done / p, base_path / p)
     return True
 

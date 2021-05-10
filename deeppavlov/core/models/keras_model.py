@@ -191,10 +191,9 @@ class LRScheduledKerasModel(LRScheduledModel, KerasModel):
         Returns:
             None
         """
-        if (isinstance(self.opt.get("learning_rate", None), float) and
-                isinstance(self.opt.get("learning_rate_decay", None), float)):
-            pass
-        else:
+        if not isinstance(
+            self.opt.get("learning_rate", None), float
+        ) or not isinstance(self.opt.get("learning_rate_decay", None), float):
             if event_name == 'after_train_log':
                 if (self.get_learning_rate_variable() is not None) and ('learning_rate' not in data):
                     data['learning_rate'] = float(K.get_value(self.get_learning_rate_variable()))

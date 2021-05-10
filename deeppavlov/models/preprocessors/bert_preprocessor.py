@@ -140,10 +140,12 @@ class BertNerPreprocessor(Component):
                                         mode=self.mode,
                                         subword_mask_mode=self.subword_mask_mode,
                                         token_masking_prob=self.token_masking_prob)
-            if self.max_seq_length is not None:
-                if len(sw_toks) > self.max_seq_length:
-                    raise RuntimeError(f"input sequence after bert tokenization"
-                                       f" shouldn't exceed {self.max_seq_length} tokens.")
+            if (
+                self.max_seq_length is not None
+                and len(sw_toks) > self.max_seq_length
+            ):
+                raise RuntimeError(f"input sequence after bert tokenization"
+                                   f" shouldn't exceed {self.max_seq_length} tokens.")
             subword_tokens.append(sw_toks)
             subword_tok_ids.append(self.tokenizer.convert_tokens_to_ids(sw_toks))
             startofword_markers.append(sw_marker)
@@ -160,20 +162,19 @@ class BertNerPreprocessor(Component):
             if self.provide_subword_tags:
                 return tokens, subword_tokens, subword_tok_ids, \
                     attention_mask, startofword_markers, subword_tags
-            else:
-                nonmasked_tags = [[t for t in ts if t != 'X'] for ts in tags]
-                for swts, swids, swms, ts in zip(subword_tokens,
-                                                 subword_tok_ids,
-                                                 startofword_markers,
-                                                 nonmasked_tags):
-                    if (len(swids) != len(swms)) or (len(ts) != sum(swms)):
-                        log.warning('Not matching lengths of the tokenization!')
-                        log.warning(f'Tokens len: {len(swts)}\n Tokens: {swts}')
-                        log.warning(f'Markers len: {len(swms)}, sum: {sum(swms)}')
-                        log.warning(f'Masks: {swms}')
-                        log.warning(f'Tags len: {len(ts)}\n Tags: {ts}')
-                return tokens, subword_tokens, subword_tok_ids, \
-                    attention_mask, startofword_markers, nonmasked_tags
+            nonmasked_tags = [[t for t in ts if t != 'X'] for ts in tags]
+            for swts, swids, swms, ts in zip(subword_tokens,
+                                             subword_tok_ids,
+                                             startofword_markers,
+                                             nonmasked_tags):
+                if (len(swids) != len(swms)) or (len(ts) != sum(swms)):
+                    log.warning('Not matching lengths of the tokenization!')
+                    log.warning(f'Tokens len: {len(swts)}\n Tokens: {swts}')
+                    log.warning(f'Markers len: {len(swms)}, sum: {sum(swms)}')
+                    log.warning(f'Masks: {swms}')
+                    log.warning(f'Tags len: {len(ts)}\n Tags: {ts}')
+            return tokens, subword_tokens, subword_tok_ids, \
+                attention_mask, startofword_markers, nonmasked_tags
         return tokens, subword_tokens, subword_tok_ids, startofword_markers, attention_mask
 
     @staticmethod
@@ -242,17 +243,16 @@ class BertRankerPreprocessor(BertPreprocessor):
         else:
             contexts = [el[0] for el in batch]
             for i in range(1, len(batch[0])):
-                responses = []
-                for el in batch:
-                    responses.append(el[i])
+                responses = [el[i] for el in batch]
                 cont_resp_pairs.append(zip(contexts, responses))
         examples = []
         for s in cont_resp_pairs:
             ex = [InputExample(unique_id=0, text_a=context, text_b=response) for context, response in s]
             examples.append(ex)
-        features = [convert_examples_to_features(el, self.max_seq_length, self.tokenizer) for el in examples]
-
-        return features
+        return [
+            convert_examples_to_features(el, self.max_seq_length, self.tokenizer)
+            for el in examples
+        ]
 
 
 @register('bert_sep_ranker_preprocessor')
@@ -279,9 +279,7 @@ class BertSepRankerPreprocessor(BertPreprocessor):
 
         samples = []
         for i in range(len(batch[0])):
-            s = []
-            for el in batch:
-                s.append(el[i])
+            s = [el[i] for el in batch]
             samples.append(s)
         s_empt = [None] * len(samples[0])
         # TODO: add unique id
@@ -290,9 +288,10 @@ class BertSepRankerPreprocessor(BertPreprocessor):
             ex = [InputExample(unique_id=0, text_a=text_a, text_b=text_b) for text_a, text_b in
                   zip(s, s_empt)]
             examples.append(ex)
-        features = [convert_examples_to_features(el, self.max_seq_length, self.tokenizer) for el in examples]
-
-        return features
+        return [
+            convert_examples_to_features(el, self.max_seq_length, self.tokenizer)
+            for el in examples
+        ]
 
 
 @register('bert_sep_ranker_predictor_preprocessor')

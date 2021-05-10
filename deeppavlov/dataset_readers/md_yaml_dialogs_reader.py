@@ -124,13 +124,17 @@ class MD_YAML_DialogsDatasetReader(DatasetReader):
                                      "val": "valid",
                                      "tst": "test"}
 
-        data = {short2long_subsample_name[subsample_name_short]:
-                    cls._read_story(Path(data_path, cls._data_fname(subsample_name_short)),
-                                    dialogs, domain_knowledge, intent2slots2text, slot_name2text2value,
-                                    ignore_slots=ignore_slots)
-                for subsample_name_short in cls.VALID_DATATYPES}
-
-        return data
+        return {
+            short2long_subsample_name[subsample_name_short]: cls._read_story(
+                Path(data_path, cls._data_fname(subsample_name_short)),
+                dialogs,
+                domain_knowledge,
+                intent2slots2text,
+                slot_name2text2value,
+                ignore_slots=ignore_slots,
+            )
+            for subsample_name_short in cls.VALID_DATATYPES
+        }
 
     @classmethod
     def _read_intent2text_mapping(cls, nlu_fpath: Path, domain_knowledge: DomainKnowledge, ignore_slots: bool  = False) \
@@ -267,10 +271,7 @@ class MD_YAML_DialogsDatasetReader(DatasetReader):
                     if not curr_story_utters:
                         curr_story_utters.append(default_system_start)
 
-                utters_to_append_batch = []
-                for user_utter in possible_user_utters:
-                    utters_to_append_batch.append([user_utter])
-
+                utters_to_append_batch = [[user_utter] for user_utter in possible_user_utters]
             except KeyError:
                 log.debug(f"INSIDE MLU_MD_DialogsDatasetReader._read_story(): "
                           f"Skipping story w. line {line} because of no NLU candidates found")
@@ -339,13 +340,12 @@ class MD_YAML_DialogsDatasetReader(DatasetReader):
                 all the possible dstc2 versions of the passed story line
             """
             if line.startswith('*'):
-                utters_to_extend_with_batch = process_user_utter(line)
+                return process_user_utter(line)
             elif line.startswith('-'):
-                utters_to_extend_with_batch = process_system_utter(line)
+                return process_system_utter(line)
             else:
                 # todo raise an exception
-                utters_to_extend_with_batch = []
-            return utters_to_extend_with_batch
+                return []
 
         story_file = open(story_fpath)
         for line in story_file:
@@ -455,12 +455,10 @@ class MD_YAML_DialogsDatasetReader(DatasetReader):
         """
         inform_slot_user_utter_hypothesis = f"inform_{slot_name}"
         if inform_slot_user_utter_hypothesis in known_intents:
-            inform_slot_user_utter = inform_slot_user_utter_hypothesis
+            return inform_slot_user_utter_hypothesis
         else:
             # todo raise an exception
-            inform_slot_user_utter = None
-            pass
-        return inform_slot_user_utter
+            return None
 
     @classmethod
     def get_augmented_ask_slot_utter(cls, form_name: str, known_responses: List[str], slot_name: str):
@@ -477,14 +475,12 @@ class MD_YAML_DialogsDatasetReader(DatasetReader):
         ask_slot_act_name_hypothesis1 = f"utter_ask_{form_name}_{slot_name}"
         ask_slot_act_name_hypothesis2 = f"utter_ask_{slot_name}"
         if ask_slot_act_name_hypothesis1 in known_responses:
-            ask_slot_act_name = ask_slot_act_name_hypothesis1
+            return ask_slot_act_name_hypothesis1
         elif ask_slot_act_name_hypothesis2 in known_responses:
-            ask_slot_act_name = ask_slot_act_name_hypothesis2
+            return ask_slot_act_name_hypothesis2
         else:
             # todo raise an exception
-            ask_slot_act_name = None
-            pass
-        return ask_slot_act_name
+            return None
 
     @classmethod
     def get_last_users_turn(cls, curr_story_utters: List[Dict]) -> Dict:
@@ -566,8 +562,8 @@ class MD_YAML_DialogsDatasetReader(DatasetReader):
         Returns:
             the slots ommitted to find an NLU candidate, the slots represented in the candidate, the intent name used
         """
-        possible_keys = [k for k in intent2slots2text.keys() if user_action in k]
-        possible_keys = possible_keys + [user_action]
+        possible_keys = [k for k in intent2slots2text if user_action in k]
+        possible_keys += [user_action]
         possible_keys = sorted(possible_keys, key=lambda action_s: action_s.count('+'))
         for possible_action_key in possible_keys:
             if intent2slots2text[possible_action_key].get(slots_actual_values):
@@ -575,11 +571,11 @@ class MD_YAML_DialogsDatasetReader(DatasetReader):
                 slots_to_exclude = []
                 return slots_to_exclude, slots_used_values, possible_action_key
             else:
-                slots_lazy_key = set(e[0] for e in slots_actual_values)
+                slots_lazy_key = {e[0] for e in slots_actual_values}
                 slots_lazy_key -= {"intent"}
                 fake_keys = []
                 for known_key in intent2slots2text[possible_action_key].keys():
-                    if slots_lazy_key.issubset(set(e[0] for e in known_key)):
+                    if slots_lazy_key.issubset({e[0] for e in known_key}):
                         fake_keys.append(known_key)
                         break
 
@@ -622,7 +618,7 @@ class MD_YAML_DialogsDatasetReader(DatasetReader):
         slots_info = json.loads('{' + slots_info)
         slots_dstc2formatted = [[slot_name, slot_value] for slot_name, slot_value in slots_info.items()]
         if ignore_slots:
-            slots_dstc2formatted = dict()
+            slots_dstc2formatted = {}
         return user_action, slots_dstc2formatted
 
     @staticmethod

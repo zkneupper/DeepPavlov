@@ -100,11 +100,7 @@ class SklearnComponent(Estimator):
         """
         n_inputs = len(self.pipe_params["in"]) if isinstance(self.pipe_params["in"], list) else 1
         x_features = self.compose_input_data(args[:n_inputs])
-        if len(args) > n_inputs:
-            y_ = np.squeeze(np.array(args[-1]))
-        else:
-            y_ = None
-
+        y_ = np.squeeze(np.array(args[-1])) if len(args) > n_inputs else None
         try:
             log.info("Fitting model {}".format(self.model_class))
             self.model.fit(x_features, y_)
@@ -209,7 +205,7 @@ class SklearnComponent(Estimator):
             self.model_class = self.model.__module__ + self.model.__class__.__name__
             log.info("Model {} loaded  with parameters".format(self.model_class))
 
-            if warm_start and "warm_start" in self.model_params.keys():
+            if warm_start and "warm_start" in self.model_params:
                 self.model_params["warm_start"] = True
                 log.info("Fitting of loaded model can be continued because `warm_start` is set to True")
             else:
@@ -258,24 +254,27 @@ class SklearnComponent(Estimator):
             sparse or dense array of stacked data
         """
         x_features = []
-        for i in range(len(x)):
-            if ((isinstance(x[i], tuple) or isinstance(x[i], list) or isinstance(x[i], np.ndarray) and len(x[i]))
-                    or (issparse(x[i]) and x[i].shape[0])):
-                if issparse(x[i][0]):
-                    x_features.append(vstack(list(x[i])))
-                elif isinstance(x[i][0], np.ndarray) or isinstance(x[i][0], list):
-                    x_features.append(np.vstack(list(x[i])))
-                elif isinstance(x[i][0], str):
-                    x_features.append(np.array(x[i]))
+        for item in x:
+            if (
+                isinstance(item, tuple)
+                or isinstance(item, list)
+                or isinstance(item, np.ndarray)
+                and len(item)
+                or issparse(item)
+                and item.shape[0]
+            ):
+                if issparse(item[0]):
+                    x_features.append(vstack(list(item)))
+                elif isinstance(item[0], (np.ndarray, list)):
+                    x_features.append(np.vstack(list(item)))
+                elif isinstance(item[0], str):
+                    x_features.append(np.array(item))
                 else:
                     raise ConfigError('Not implemented this type of vectors')
             else:
                 raise ConfigError("Input vectors cannot be empty")
 
-        sparse = False
-        for inp in x_features:
-            if issparse(inp):
-                sparse = True
+        sparse = any(issparse(inp) for inp in x_features)
         if sparse:
             x_features = hstack(list(x_features))
         else:

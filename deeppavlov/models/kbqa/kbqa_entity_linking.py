@@ -302,7 +302,7 @@ class KBEntityLinker(Component, Serializable):
         entities_ratios = []
         for candidate, entity_names in zip(candidate_entities, candidate_names):
             entity_num, entity_id, num_rels, tokens_matched = candidate
-            fuzz_ratio = max([fuzz.ratio(name.lower(), entity) for name in entity_names])
+            fuzz_ratio = max(fuzz.ratio(name.lower(), entity) for name in entity_names)
             entities_ratios.append((entity_num, entity_id, tokens_matched, fuzz_ratio, num_rels))
 
         srtd_with_ratios = sorted(entities_ratios, key=lambda x: (x[2], x[3], x[4]), reverse=True)
@@ -334,12 +334,11 @@ class KBEntityLinker(Component, Serializable):
         candidate_entities_filter = []
         for candidate in candidate_entities:
             entity_num = candidate[0]
-            entity_names = []
-
             entity_names_found = self.q2name[entity_num]
             if len(entity_names_found[0]) < 6 * entity_length:
                 entity_name = entity_names_found[0]
-                entity_names.append(entity_name)
+                entity_names = [entity_name]
+
                 if len(entity_names_found) > 1:
                     for alias in entity_names_found[1:]:
                         entity_names.append(alias)

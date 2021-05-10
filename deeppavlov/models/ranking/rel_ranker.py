@@ -61,12 +61,8 @@ class RelRanker(LRScheduledTFModel):
         self.return_probas = return_probas
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
-        
-        if check_gpu_existence():
-            self.GRU = CudnnGRU
-        else:
-            self.GRU = CudnnCompatibleGRU
 
+        self.GRU = CudnnGRU if check_gpu_existence() else CudnnCompatibleGRU
         self.question_ph = tf.placeholder(tf.float32, [None, None, 300])
         self.rel_emb_ph = tf.placeholder(tf.float32, [None, None, 300])
 
@@ -112,28 +108,21 @@ class RelRanker(LRScheduledTFModel):
         self.sess.run(tf.global_variables_initializer())
         self.load()
 
-    def fill_feed_dict(self, questions_embs: List[np.ndarray], rels_embs: List[np.ndarray], y=None, train=False) -> \
-            Dict[tf.placeholder, List[np.ndarray]]:
+    def fill_feed_dict(self, questions_embs: List[np.ndarray], rels_embs: List[np.ndarray], y=None, train=False) -> Dict[tf.placeholder, List[np.ndarray]]:
         questions_embs = np.array(questions_embs)
         rels_embs = np.array(rels_embs)
         feed_dict = {self.question_ph: questions_embs, self.rel_emb_ph: rels_embs}
         if y is not None:
             feed_dict[self.y_ph] = y
-        if train:
-            feed_dict[self.keep_prob_ph] = self.dropout_keep_prob
-        else:
-            feed_dict[self.keep_prob_ph] = 1.0
-
+        feed_dict[self.keep_prob_ph] = self.dropout_keep_prob if train else 1.0
         return feed_dict
 
-    def __call__(self, questions_embs: List[np.ndarray], rels_embs: List[np.ndarray]) -> \
-            List[np.ndarray]:
+    def __call__(self, questions_embs: List[np.ndarray], rels_embs: List[np.ndarray]) -> List[np.ndarray]:
         feed_dict = self.fill_feed_dict(questions_embs, rels_embs)
         if self.return_probas:
-            pred = self.sess.run(self.logits, feed_dict)
+            return self.sess.run(self.logits, feed_dict)
         else:
-            pred = self.sess.run(self.y_pred, feed_dict)
-        return pred
+            return self.sess.run(self.y_pred, feed_dict)
 
     def train_on_batch(self, questions_embs: List[np.ndarray], 
                              rels_embs: List[np.ndarray],

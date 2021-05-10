@@ -54,12 +54,12 @@ class UbuntuV2Reader(DatasetReader):
         return dataset
 
     def preprocess_data_train(self, train_fname: Union[Path, str]) -> List[Tuple[List[str], int]]:
-        contexts = []
-        responses = []
         labels = []
         with open(train_fname, 'r') as f:
             reader = csv.reader(f)
             next(reader)
+            contexts = []
+            responses = []
             for el in reader:
                 contexts.append(el[0])
                 responses.append(el[1])

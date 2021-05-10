@@ -37,7 +37,7 @@ def squad_v2_exact_match(y_true: List[List[str]], y_predicted: List[str]) -> flo
     """
     EM_total = sum(normalize_answer(prediction) in map(normalize_answer, ground_truth)
                    for ground_truth, prediction in zip(y_true, y_predicted))
-    return 100 * EM_total / len(y_true) if len(y_true) > 0 else 0
+    return 100 * EM_total / len(y_true) if y_true else 0
 
 
 @register_metric('squad_v1_em')
@@ -97,7 +97,7 @@ def squad_v2_f1(y_true: List[List[str]], y_predicted: List[str]) -> float:
             f1 = (2 * precision * recall) / (precision + recall)
             f1s.append(f1)
         f1_total += max(f1s)
-    return 100 * f1_total / len(y_true) if len(y_true) > 0 else 0
+    return 100 * f1_total / len(y_true) if y_true else 0
 
 
 @register_metric('squad_v1_f1')

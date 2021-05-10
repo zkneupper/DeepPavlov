@@ -95,13 +95,12 @@ class TokensVectorizer:
         Returns:
             the padded sequence of vectors
         """
-        out_sequence_length = out_sequence_length - len(tokens_embedded)
+        out_sequence_length -= len(tokens_embedded)
         padding = np.zeros(shape=(out_sequence_length, token_dim), dtype=np.float32)
         if tokens_embedded:
-            emb_context = np.concatenate((padding, np.array(tokens_embedded)))
+            return np.concatenate((padding, np.array(tokens_embedded)))
         else:
-            emb_context = padding
-        return emb_context
+            return padding
 
     def calc_tokens_mean_embedding(self, tokens: List[str]) -> np.ndarray:
         """
@@ -133,10 +132,12 @@ class TokensVectorizer:
         """
         tokens_embedded = self._embed_tokens(tokens, False)
         if tokens_embedded is not None:
-            emb_context = self._pad_sequence_to_size(output_sequence_length, token_dim, tokens_embedded)
+            return self._pad_sequence_to_size(
+                output_sequence_length, token_dim, tokens_embedded
+            )
+
         else:
-            emb_context = np.array([], dtype=np.float32)
-        return emb_context
+            return np.array([], dtype=np.float32)
 
     def get_dims(self) -> TokensVectorRepresentationParams:
         """

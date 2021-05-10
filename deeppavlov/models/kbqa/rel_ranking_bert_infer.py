@@ -91,8 +91,7 @@ class RelRankerBertInfer(Component, Serializable):
             entities_list = [[] for _ in questions_list]
         if template_answers_list is None:
             template_answers_list = ["" for _ in questions_list]
-        for question, candidate_answers, entities, template_answer in \
-                zip(questions_list, candidate_answers_list, entities_list, template_answers_list):
+        for question, candidate_answers, entities, template_answer in zip(questions_list, candidate_answers_list, entities_list, template_answers_list):
             answers_with_scores = []
             answer = "Not Found"
 
@@ -107,9 +106,12 @@ class RelRankerBertInfer(Component, Serializable):
                     candidate_rels = [candidate_rel.split('/')[-1] for candidate_rel in candidate_rels]
                     candidate_answer = candidate_ans_and_rels[-2]
                     candidate_confidence = candidate_ans_and_rels[-1]
-                    candidate_rels = " # ".join([self.rel_q2name[candidate_rel] \
-                                                 for candidate_rel in candidate_rels if
-                                                 candidate_rel in self.rel_q2name])
+                    candidate_rels = " # ".join(
+                        self.rel_q2name[candidate_rel]
+                        for candidate_rel in candidate_rels
+                        if candidate_rel in self.rel_q2name
+                    )
+
 
                     if candidate_rels:
                         questions_batch.append(question)

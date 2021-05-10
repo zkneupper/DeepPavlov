@@ -86,10 +86,7 @@ class BiLSTMSiameseNetwork(KerasSiameseModel):
 
     def compile(self) -> None:
         optimizer = Adam(lr=self.learning_rate)
-        if self.triplet_mode:
-            loss = self._triplet_loss
-        else:
-            loss = losses.binary_crossentropy
+        loss = self._triplet_loss if self.triplet_mode else losses.binary_crossentropy
         self.model.compile(loss=loss, optimizer=optimizer)
         self.score_model = self.create_score_model()
 
@@ -103,17 +100,13 @@ class BiLSTMSiameseNetwork(KerasSiameseModel):
                 self.model.get_layer(name="embedding_b").set_weights([self.emb_matrix])
 
     def embedding_layer(self) -> Layer:
-        out = Embedding(self.toks_num,
+        return Embedding(self.toks_num,
                         self.embedding_dim,
                         input_length=self.max_sequence_length,
                         trainable=True, name="embedding")
-        return out
 
     def lstm_layer(self) -> Layer:
-        if self.pooling:
-            ret_seq = True
-        else:
-            ret_seq = False
+        ret_seq = bool(self.pooling)
         ker_in = glorot_uniform(seed=self.seed)
         rec_in = Orthogonal(seed=self.seed)
         if self.recurrent == "bilstm" or self.recurrent is None:
@@ -166,8 +159,7 @@ class BiLSTMSiameseNetwork(KerasSiameseModel):
         else:
             dist = Lambda(self._diff_mult_dist)([lstm_c, lstm_r])
             dist = Dense(1, activation='sigmoid', name="score_model")(dist)
-        model = Model([context, response], dist)
-        return model
+        return Model([context, response], dist)
 
     def create_score_model(self) -> Model:
         cr = self.model.inputs
@@ -180,8 +172,7 @@ class BiLSTMSiameseNetwork(KerasSiameseModel):
             score = self.model.get_layer("score_model").output
             score = Lambda(lambda x: 1. - K.squeeze(x, -1))(score)
         score = Lambda(lambda x: 1. - x)(score)
-        model = Model(cr, score)
-        return model
+        return Model(cr, score)
 
     def _diff_mult_dist(self, inputs: List[Tensor]) -> Tensor:
         input1, input2 = inputs
@@ -196,8 +187,7 @@ class BiLSTMSiameseNetwork(KerasSiameseModel):
         square = K.square(diff)
         _sum = K.sum(square, axis=1)
         _sum = K.clip(_sum, min_value=1e-12, max_value=None)
-        dist = K.sqrt(_sum) / 2.
-        return dist
+        return K.sqrt(_sum) / 2.
 
     def _pairwise_distances(self, inputs: List[Tensor]) -> Tensor:
         emb_c, emb_r = inputs
@@ -218,10 +208,9 @@ class BiLSTMSiameseNetwork(KerasSiameseModel):
         y_true = K.squeeze(labels, axis=1)
         """Triplet loss function"""
         if self.hard_triplets:
-            triplet_loss = self._batch_hard_triplet_loss(y_true, pairwise_dist)
+            return self._batch_hard_triplet_loss(y_true, pairwise_dist)
         else:
-            triplet_loss = self._batch_all_triplet_loss(y_true, pairwise_dist)
-        return triplet_loss
+            return self._batch_all_triplet_loss(y_true, pairwise_dist)
 
     def _batch_all_triplet_loss(self, y_true: Tensor, pairwise_dist: Tensor) -> Tensor:
         anchor_positive_dist = K.expand_dims(pairwise_dist, 2)

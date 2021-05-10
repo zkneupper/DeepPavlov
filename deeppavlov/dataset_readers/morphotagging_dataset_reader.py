@@ -63,16 +63,13 @@ def read_infile(infile: Union[Path, str], *, from_words=False,
     # read_syntax = read_syntax and read_only_words
     if from_words:
         word_column, read_only_words = 0, True
-    if infile is not sys.stdin:
-        fin = open(infile, "r", encoding="utf8")
-    else:
-        fin = sys.stdin
+    fin = sys.stdin if infile is sys.stdin else open(infile, "r", encoding="utf8")
     for line in fin:
         line = line.strip()
         if line.startswith("#"):
             continue
         if line == "":
-            if len(curr_word_sent) > 0:
+            if curr_word_sent:
                 if read_only_words:
                     curr_tag_sent = None
                 elif read_syntax:
@@ -95,7 +92,7 @@ def read_infile(infile: Union[Path, str], *, from_words=False,
             if read_syntax:
                 curr_head_sent.append(int(splitted[head_column]))
                 curr_dep_sent.append(splitted[dep_column])
-    if len(curr_word_sent) > 0:
+    if curr_word_sent:
         if read_only_words:
             curr_tag_sent = None
         elif read_syntax:
@@ -140,10 +137,7 @@ class MorphotaggerDatasetReader(DatasetReader):
         if isinstance(data_path, str):
             data_path = Path(data_path)
         if isinstance(data_path, Path):
-            if data_path.exists():
-                is_file = data_path.is_file()
-            else:
-                is_file = (len(data_types) == 1)
+            is_file = data_path.is_file() if data_path.exists() else (len(data_types) == 1)
             if is_file:
                 # path to a single file
                 data_path, reserve_data_path = [data_path], None

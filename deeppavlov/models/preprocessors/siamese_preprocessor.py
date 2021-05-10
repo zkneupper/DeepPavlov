@@ -103,24 +103,18 @@ class SiamesePreprocessor(Estimator):
         self.vocab.fit([el for x in x_tok for el in x])
 
     def __call__(self, x: Union[List[List[str]], List[str]]) -> Iterable[List[List[np.ndarray]]]:
-        if len(x) == 0 or isinstance(x[0], str):
-            if len(x) == 1:  # interact mode: len(batch) == 1
-                x_preproc = [[sent.strip() for sent in x[0].split('&')]]  # List[str] -> List[List[str]]
-            elif len(x) == 0:
-                x_preproc = [['']]
-            else:
-                x_preproc = [[el] for el in x]
+        if isinstance(x[0], str) and len(x) == 1:  # interact mode: len(batch) == 1
+            x_preproc = [[sent.strip() for sent in x[0].split('&')]]  # List[str] -> List[List[str]]
+        elif isinstance(x[0], str) or len(x) == 0:
+            x_preproc = [[el] for el in x]
         else:
             x_preproc = [el[:self.num_context_turns + self.num_ranking_samples] for el in x]
         for el in x_preproc:
             x_tok = self.tokenizer(el)
             x_ctok = [y if len(y) != 0 else [''] for y in x_tok]
-            if self.use_matrix:
-                x_proc = self.vocab(x_ctok)
-            else:
-                x_proc = self.embedder(x_ctok)
+            x_proc = self.vocab(x_ctok) if self.use_matrix else self.embedder(x_ctok)
             if self.dynamic_batch:
-                msl = min((max([len(y) for el in x_tok for y in el]), self.max_sequence_length))
+                msl = min((max(len(y) for el in x_tok for y in el), self.max_sequence_length))
             else:
                 msl = self.max_sequence_length
             x_proc = zero_pad_truncate(x_proc, msl, pad=self.padding, trunc=self.truncating)

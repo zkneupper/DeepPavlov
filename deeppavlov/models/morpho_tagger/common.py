@@ -59,8 +59,7 @@ def predict_with_model(config_path: [Path, str], infile: Optional[Union[Path, st
     for elem in model.pipe:
         if isinstance(elem[-1], TagOutputPrettifier):
             elem[-1].set_format_mode(output_format)
-    answers = model.batched_call(data, batch_size=batch_size)
-    return answers
+    return model.batched_call(data, batch_size=batch_size)
 
 
 @register('tag_output_prettifier')
@@ -158,9 +157,11 @@ class TagOutputPrettifier(Component):
                 4	pizza	_	NOUN	_	Number=Sing	_	_	_	_
                 5	.	_	PUNCT	_	_	_	_	_	_
         """
-        answer = []
-        for i, (word, tag) in enumerate(zip(tokens, tags)):
-            answer.append(self.format_string.format(i + 1, word, *make_pos_and_tag(tag)))
+        answer = [
+            self.format_string.format(i + 1, word, *make_pos_and_tag(tag))
+            for i, (word, tag) in enumerate(zip(tokens, tags))
+        ]
+
         if self.return_string:
             answer = self.begin + self.sep.join(answer) + self.end
         return answer
@@ -285,9 +286,11 @@ class DependencyOutputPrettifier(Component):
             the prettified output of the parser
 
         """
-        answer = []
-        for i, (word, head, dep) in enumerate(zip(tokens, heads, deps)):
-            answer.append(self.format_string.format(i + 1, word, head, dep))
+        answer = [
+            self.format_string.format(i + 1, word, head, dep)
+            for i, (word, head, dep) in enumerate(zip(tokens, heads, deps))
+        ]
+
         if self.return_string:
             answer = self.begin + self.sep.join(answer) + self.end
         return answer

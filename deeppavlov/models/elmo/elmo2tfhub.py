@@ -72,9 +72,8 @@ def make_module_spec(options, weight_file):
                 ids_num = tf.shape(char_ids)[0]
                 fill_ids_num = (_max_word_length - 2) - ids_num
                 pads = tf.fill([fill_ids_num], _pad_id)
-                bow_token_eow_pads = tf.concat([[_bow_id], char_ids, [_eow_id], pads],
+                return tf.concat([[_bow_id], char_ids, [_eow_id], pads],
                                                0, name='concat2bow_token_eow_pads')
-                return bow_token_eow_pads
 
         def sentence_tagging_and_padding(sen_dim):
             with tf.name_scope("sentence_tagging_and_padding_preprocessor"):
@@ -85,9 +84,8 @@ def make_module_spec(options, weight_file):
 
                 bos_sen_eos = tf.concat([[bos_ids], sen, [eos_ids]], 0, name='concat2bos_sen_eos')
                 bos_sen_eos_plus_one = bos_sen_eos + 1
-                bos_sen_eos_pads = tf.pad(bos_sen_eos_plus_one, [[0, extra_dim], [0, 0]],
+                return tf.pad(bos_sen_eos_plus_one, [[0, extra_dim], [0, 0]],
                                           "CONSTANT", name='pad2bos_sen_eos_pads')
-                return bos_sen_eos_pads
 
         # Input placeholders to the biLM.
         tokens = tf.placeholder(shape=(None, None), dtype=tf.string, name='ph2tokens')

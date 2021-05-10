@@ -156,14 +156,14 @@ class Trie:
         """
         branch, word, indexes = [self.root], [], [0]
         letters_with_children = [self._get_children_and_letters(self.root)]
-        while len(branch) > 0:
+        while branch:
             if self.is_final(branch[-1]):
                 yield "".join(word)
             while indexes[-1] == len(letters_with_children[-1]):
                 indexes.pop()
                 letters_with_children.pop()
                 branch.pop()
-                if len(indexes) == 0:
+                if not indexes:
                     raise StopIteration()
                 word.pop()
             next_letter, next_child = letters_with_children[-1][indexes[-1]]
@@ -383,11 +383,11 @@ class TrieMinimizer:
                     compressed.data[i] = copy.copy(trie.data[node_index])
             else:
                 precompute_future_symbols(compressed, precompute_symbols, allow_spaces)
-        if return_groups:
-            node_classes = [L - i - 1 for i in node_classes]
-            return compressed, node_classes
-        else:
+        if not return_groups:
             return compressed
+
+        node_classes = [L - i - 1 for i in node_classes]
+        return compressed, node_classes
 
     def generate_postorder(self, trie):
         """
@@ -396,7 +396,7 @@ class TrieMinimizer:
         order, stack = [], []
         stack.append(trie.root)
         colors = ['white'] * len(trie)
-        while len(stack) > 0:
+        while stack:
             index = stack[-1]
             color = colors[index]
             if color == 'white':  # вершина ещё не обрабатывалась

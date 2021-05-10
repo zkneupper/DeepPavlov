@@ -54,8 +54,7 @@ class DocumentChunker(Component):
         self.number_of_paragraphs = number_of_paragraphs
 
     def __call__(self, batch_docs: List[Union[str, List[str]]],
-                 batch_docs_ids: Optional[List[Union[str, List[str]]]] = None) -> \
-            Union[Tuple[Union[List[str], List[List[str]]], Union[List[str], List[List[str]]]],
+                 batch_docs_ids: Optional[List[Union[str, List[str]]]] = None) -> Union[Tuple[Union[List[str], List[List[str]]], Union[List[str], List[List[str]]]],
                   Union[List[str], List[List[str]]]]:
         """Make chunks from a batch of documents. There can be several documents in each batch.
         Args:
@@ -101,32 +100,28 @@ class DocumentChunker(Component):
                         keep = []
                         for s in sentences:
                             n_tokens += len(s.split())
-                            if n_tokens > self.tokens_limit:
-                                if keep:
-                                    doc_chunks.append(' '.join(keep))
-                                    n_tokens = 0
-                                    keep.clear()
+                            if n_tokens > self.tokens_limit and keep:
+                                doc_chunks.append(' '.join(keep))
+                                n_tokens = 0
+                                keep.clear()
                             keep.append(s)
                         if keep:
                             doc_chunks.append(' '.join(keep))
-                        batch_chunks.append(doc_chunks)
-                        batch_chunks_ids.append([id] * len(doc_chunks))
                     else:
                         split_doc = doc.split()
                         doc_chunks = [split_doc[i:i + self.tokens_limit] for i in
                                       range(0, len(split_doc), self.tokens_limit)]
-                        batch_chunks.append(doc_chunks)
-                        batch_chunks_ids.append([id] * len(doc_chunks))
+                    batch_chunks.append(doc_chunks)
+                    batch_chunks_ids.append([id] * len(doc_chunks))
             result.append(batch_chunks)
             result_ids.append(batch_chunks_ids)
 
-        if self.flatten_result:
-            if isinstance(result[0][0], list):
-                for i in range(len(result)):
-                    flattened = list(chain.from_iterable(result[i]))
-                    flattened_ids = list(chain.from_iterable(result_ids[i]))
-                    result[i] = flattened
-                    result_ids[i] = flattened_ids
+        if self.flatten_result and isinstance(result[0][0], list):
+            for i in range(len(result)):
+                flattened = list(chain.from_iterable(result[i]))
+                flattened_ids = list(chain.from_iterable(result_ids[i]))
+                result[i] = flattened
+                result_ids[i] = flattened_ids
 
         if empty_docs_ids_flag:
             return result
@@ -155,8 +150,4 @@ class StringMultiplier(Component):
             a multiplied s as list
 
         """
-        res = []
-        for s, r in zip(batch_s, ref):
-            res.append([s] * len(r))
-
-        return res
+        return [[s] * len(r) for s, r in zip(batch_s, ref)]

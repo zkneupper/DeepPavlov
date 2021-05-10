@@ -124,7 +124,7 @@ class IntentCatcher(NNModel):
                     activation='relu'
                 )
             ]
-            for i in range(number_of_layers-2):
+            for _ in range(number_of_layers-2):
                 layers.append(
                     tf.keras.layers.Dense(
                         units=hidden_dim,
@@ -173,8 +173,7 @@ class IntentCatcher(NNModel):
             generated_y.extend([l for i in range(len(gx))])
         log.info(f"Original number of samples: {len(y)}, generated samples: {len(generated_y)}")
         embedded_x = self.session.run(self.embedded, feed_dict={self.sentences:generated_x}) # actual trainig
-        loss = self.classifier.train_on_batch(embedded_x, generated_y)
-        return loss
+        return self.classifier.train_on_batch(embedded_x, generated_y)
 
     def process_event(self, event_name, data):
         pass
@@ -240,9 +239,12 @@ class IntentCatcher(NNModel):
         """
         log.info("Saving model {} and regexps to {}".format(self.__class__.__name__, self.save_path))
         save_path = Path(self.save_path)
-        if not save_path.exists():
-            if save_path.parent.exists() and save_path.parent / "model" == save_path:
-                os.mkdir(save_path.parent / "model")
+        if (
+            not save_path.exists()
+            and save_path.parent.exists()
+            and save_path.parent / "model" == save_path
+        ):
+            os.mkdir(save_path.parent / "model")
         self.classifier.save(self.save_path / Path('nn.h5'))
         regexps = [{"regexp":reg.pattern, "label":str(l)} for reg, l in self.regexps]
         with open(self.save_path / Path('regexps.json'), 'w') as fp:

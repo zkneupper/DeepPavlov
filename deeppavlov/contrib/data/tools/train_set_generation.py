@@ -54,7 +54,7 @@ class TrainSetGeneration():
         while idx == -1:
             try:
                 idx = int(input('[INPUT] ' + prompt))
-                if not idx in valid_vals:
+                if idx not in valid_vals:
                     print('[INFO] please input a valid integer in: ', valid_vals)
                     idx = -1
             except ValueError:

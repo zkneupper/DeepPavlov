@@ -68,11 +68,7 @@ class TfidfRanker(Component):
             scores = np.squeeze(
                 scores.toarray() + 0.0001)  # add a small value to eliminate zero scores
 
-            if self.active:
-                thresh = self.top_n
-            else:
-                thresh = len(self.vectorizer.doc_index)
-
+            thresh = self.top_n if self.active else len(self.vectorizer.doc_index)
             if thresh >= len(scores):
                 o = np.argpartition(-scores, len(scores) - 1)[0:thresh]
             else:

@@ -198,7 +198,10 @@ class QueryGeneratorBase(Component, Serializable):
                      (not self.syntax_structure_known and [len(entity_ids), len(type_ids)] == template[
                          "entities_and_types_num"])
                      or self.syntax_structure_known]
-        templates_string = '\n'.join([template["query_template"] for template in templates])
+        templates_string = '\n'.join(
+            template["query_template"] for template in templates
+        )
+
         log.debug(f"{templates_string}")
         if not templates:
             return candidate_outputs
@@ -228,7 +231,11 @@ class QueryGeneratorBase(Component, Serializable):
                     if candidate_outputs:
                         return candidate_outputs
 
-        log.debug("candidate_rels_and_answers:\n" + '\n'.join([str(output) for output in candidate_outputs[:5]]))
+        log.debug(
+            "candidate_rels_and_answers:\n"
+            + '\n'.join(str(output) for output in candidate_outputs[:5])
+        )
+
 
         return candidate_outputs
 
@@ -257,8 +264,4 @@ class QueryGeneratorBase(Component, Serializable):
         html = get_html(article_id)
         page = BeautifulSoup(html, 'lxml')
         tags = list(page.find_all(['p']))
-        if tags:
-            howto_content = f"{tags[0].text.strip()}@en"
-        else:
-            howto_content = "Not Found"
-        return howto_content
+        return f"{tags[0].text.strip()}@en" if tags else "Not Found"

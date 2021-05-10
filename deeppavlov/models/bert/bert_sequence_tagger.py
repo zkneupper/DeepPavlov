@@ -294,8 +294,7 @@ class BertSequenceNetwork(LRScheduledTFModel):
         """
         max_length = tf.reduce_max(self.seq_lengths)
         one_hot_max_len = tf.one_hot(self.seq_lengths - 1, max_length)
-        tag_mask = tf.cumsum(one_hot_max_len[:, ::-1], axis=1)[:, ::-1]
-        return tag_mask
+        return tf.cumsum(one_hot_max_len[:, ::-1], axis=1)[:, ::-1]
 
     def encoder_layers(self):
         """

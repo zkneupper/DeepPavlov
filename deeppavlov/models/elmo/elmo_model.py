@@ -49,12 +49,11 @@ class BidirectionalLanguageModel(object):
             otherwise use token ids
         max_batch_size: the maximum allowable batch size
         """
-        if not use_character_inputs:
-            if embedding_weight_file is None:
-                raise ValueError(
-                    "embedding_weight_file is required input with "
-                    "not use_character_inputs"
-                )
+        if not use_character_inputs and embedding_weight_file is None:
+            raise ValueError(
+                "embedding_weight_file is required input with "
+                "not use_character_inputs"
+            )
 
         self._options = options
         self._weight_file = weight_file
@@ -88,12 +87,20 @@ class BidirectionalLanguageModel(object):
         """
         if ids_placeholder in self._ops:
             # have already created ops for this placeholder, just return them
-            ret = self._ops[ids_placeholder]
+            return self._ops[ids_placeholder]
 
+        # need to create the graph
+        if len(self._ops) == 0:
+            # first time creating the graph, don't reuse variables
+            lm_graph = BidirectionalLanguageModelGraph(
+                self._options,
+                self._weight_file,
+                ids_placeholder,
+                embedding_weight_file=self._embedding_weight_file,
+                use_character_inputs=self._use_character_inputs,
+                max_batch_size=self._max_batch_size)
         else:
-            # need to create the graph
-            if len(self._ops) == 0:
-                # first time creating the graph, don't reuse variables
+            with tf.variable_scope('', reuse=True):
                 lm_graph = BidirectionalLanguageModelGraph(
                     self._options,
                     self._weight_file,
@@ -101,22 +108,11 @@ class BidirectionalLanguageModel(object):
                     embedding_weight_file=self._embedding_weight_file,
                     use_character_inputs=self._use_character_inputs,
                     max_batch_size=self._max_batch_size)
-            else:
-                with tf.variable_scope('', reuse=True):
-                    lm_graph = BidirectionalLanguageModelGraph(
-                        self._options,
-                        self._weight_file,
-                        ids_placeholder,
-                        embedding_weight_file=self._embedding_weight_file,
-                        use_character_inputs=self._use_character_inputs,
-                        max_batch_size=self._max_batch_size)
 
-            ops = self._build_ops(lm_graph)
-            self._ops[ids_placeholder] = ops
-            self._graphs[ids_placeholder] = lm_graph
-            ret = ops
-
-        return ret
+        ops = self._build_ops(lm_graph)
+        self._ops[ids_placeholder] = ops
+        self._graphs[ids_placeholder] = lm_graph
+        return ops
 
     def _build_ops(self, lm_graph):
         with tf.control_dependencies([lm_graph.update_state_op]):

@@ -57,11 +57,7 @@ class Dstc2IntentsDatasetIterator(BasicClassificationDatasetIterator):
                          field_to_split, split_fields, split_proportions,
                          seed=seed, shuffle=shuffle)
 
-        new_data = dict()
-        new_data['train'] = []
-        new_data['valid'] = []
-        new_data['test'] = []
-
+        new_data = {'train': [], 'valid': [], 'test': []}
         for field in ['train', 'valid', 'test']:
             for turn in self.data[field]:
                 reply = turn[0]

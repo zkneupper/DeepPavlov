@@ -109,18 +109,18 @@ class TorchModel(NNModel):
         Returns:
             None
         """
-        if callable(model_func):
-            self.model = model_func(**self.opt).to(self.device)
-            self.optimizer = getattr(torch.optim, self.optimizer_name)(
-                self.model.parameters(), **self.optimizer_parameters)
-            if self.lr_scheduler_name:
-                self.lr_scheduler = getattr(torch.optim.lr_scheduler, self.lr_scheduler_name)(
-                    self.optimizer, **self.lr_scheduler_parameters)
-
-            if self.opt.get("criterion", None):
-                self.criterion = getattr(torch.nn, self.opt.get("criterion", None))()
-        else:
+        if not callable(model_func):
             raise AttributeError("Model is not defined.")
+
+        self.model = model_func(**self.opt).to(self.device)
+        self.optimizer = getattr(torch.optim, self.optimizer_name)(
+            self.model.parameters(), **self.optimizer_parameters)
+        if self.lr_scheduler_name:
+            self.lr_scheduler = getattr(torch.optim.lr_scheduler, self.lr_scheduler_name)(
+                self.optimizer, **self.lr_scheduler_parameters)
+
+        if self.opt.get("criterion", None):
+            self.criterion = getattr(torch.nn, self.opt.get("criterion", None))()
 
     @overrides
     def load(self, fname: Optional[str] = None, *args, **kwargs) -> None:
@@ -214,14 +214,18 @@ class TorchModel(NNModel):
         if event_name == "after_epoch":
             self.epochs_done += 1
 
-        if event_name == "after_validation" and 'impatience' in data and self.learning_rate_drop_patience:
-            if data['impatience'] == self.learning_rate_drop_patience:
-                log.info(f"----------Current LR is decreased in {self.learning_rate_drop_div} times----------")
-                if self.load_before_drop:
-                    self.load(self.save_path)
-                    self.model.eval()
-                for param_group in self.optimizer.param_groups:
-                    param_group['lr'] = max(param_group['lr'] / self.learning_rate_drop_div, self.min_learning_rate)
+        if (
+            event_name == "after_validation"
+            and 'impatience' in data
+            and self.learning_rate_drop_patience
+            and data['impatience'] == self.learning_rate_drop_patience
+        ):
+            log.info(f"----------Current LR is decreased in {self.learning_rate_drop_div} times----------")
+            if self.load_before_drop:
+                self.load(self.save_path)
+                self.model.eval()
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = max(param_group['lr'] / self.learning_rate_drop_div, self.min_learning_rate)
 
     @abstractmethod
     def train_on_batch(self, x: list, y: list):
