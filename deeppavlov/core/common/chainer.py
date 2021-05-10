@@ -186,11 +186,7 @@ class Chainer(Component):
         if targets is None:
             targets = self.out_params
         in_params = list(self.in_x)
-        if len(in_params) == 1:
-            args = [x]
-        else:
-            args = list(zip(*x))
-
+        args = [x] if len(in_params) == 1 else list(zip(*x))
         if y is None:
             pipe = self.pipe
         else:

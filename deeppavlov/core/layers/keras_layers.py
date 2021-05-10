@@ -64,8 +64,7 @@ def additive_self_attention(units, n_hidden=None, n_output_features=None, activa
     query = Dense(n_hidden, activation="tanh")(units_pairs)
     attention = Dense(1, activation=lambda x: softmax(x, axis=2))(query)
     attended_units = Lambda(lambda x: K.sum(attention * x, axis=2))(exp1)
-    output = Dense(n_output_features, activation=activation)(attended_units)
-    return output
+    return Dense(n_output_features, activation=activation)(attended_units)
 
 
 def multiplicative_self_attention(units, n_hidden=None, n_output_features=None, activation=None):
@@ -96,8 +95,7 @@ def multiplicative_self_attention(units, n_hidden=None, n_output_features=None, 
     attention = Lambda(lambda x: softmax(x, axis=2))(scores)
     mult = Multiply()([attention, exp1])
     attended_units = Lambda(lambda x: K.sum(x, axis=2))(mult)
-    output = Dense(n_output_features, activation=activation)(attended_units)
-    return output
+    return Dense(n_output_features, activation=activation)(attended_units)
 
 
 class MatchingLayer(Layer):
@@ -109,7 +107,7 @@ class MatchingLayer(Layer):
     def build(self, input_shape):
         assert isinstance(input_shape, list)
         self.W = []
-        for i in range(self.output_dim):
+        for _ in range(self.output_dim):
             self.W.append(self.add_weight(name='kernel',
                                           shape=(1, input_shape[0][-1]),
                                           initializer='uniform',
@@ -136,10 +134,7 @@ class FullMatchingLayer(MatchingLayer):
             outp_last = K.l2_normalize(outp_last, -1)
             outp = K.batch_dot(outp_a, outp_last, axes=[2, 2])
             m.append(outp)
-        if self.output_dim > 1:
-            persp = K.concatenate(m, 2)
-        else:
-            persp = m[0]
+        persp = K.concatenate(m, 2) if self.output_dim > 1 else m[0]
         return [persp, persp]
 
 
@@ -157,10 +152,7 @@ class MaxpoolingMatchingLayer(MatchingLayer):
             outp = K.batch_dot(outp_a, outp_b, axes=[2, 2])
             outp = K.max(outp, -1, keepdims=True)
             m.append(outp)
-        if self.output_dim > 1:
-            persp = K.concatenate(m, 2)
-        else:
-            persp = m[0]
+        persp = K.concatenate(m, 2) if self.output_dim > 1 else m[0]
         return [persp, persp]
 
 
@@ -186,10 +178,7 @@ class AttentiveMatchingLayer(MatchingLayer):
             outp = K.batch_dot(outp_hmean, outp_a, axes=[2, 2])
             outp = K.sum(outp * kcon, -1, keepdims=True)
             m.append(outp)
-        if self.output_dim > 1:
-            persp = K.concatenate(m, 2)
-        else:
-            persp = m[0]
+        persp = K.concatenate(m, 2) if self.output_dim > 1 else m[0]
         return [persp, persp]
 
 
@@ -216,8 +205,5 @@ class MaxattentiveMatchingLayer(MatchingLayer):
             outp = K.batch_dot(outp_hmax, outp_a, axes=[2, 2])
             outp = K.sum(outp * kcon, -1, keepdims=True)
             m.append(outp)
-        if self.output_dim > 1:
-            persp = K.concatenate(m, 2)
-        else:
-            persp = m[0]
+        persp = K.concatenate(m, 2) if self.output_dim > 1 else m[0]
         return [persp, persp]

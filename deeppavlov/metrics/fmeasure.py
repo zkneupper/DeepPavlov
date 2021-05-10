@@ -32,8 +32,7 @@ def ner_f1(y_true, y_predicted):
     results = precision_recall_f1(y_true,
                                   y_predicted,
                                   print_results=True)
-    f1 = results['__total__']['f1']
-    return f1
+    return results['__total__']['f1']
 
 
 @register_metric('ner_token_f1')
@@ -61,14 +60,8 @@ def ner_token_f1(y_true, y_pred, print_results=False):
         fp = np.sum((y_true_inds != tag_ind) & (y_pred_inds == tag_ind))
         n_pred = np.sum(y_pred_inds == tag_ind)
         n_true = np.sum(y_true_inds == tag_ind)
-        if tp + fp > 0:
-            precision = tp / (tp + fp) * 100
-        else:
-            precision = 0
-        if tp + fn > 0:
-            recall = tp / (tp + fn) * 100
-        else:
-            recall = 0
+        precision = tp / (tp + fp) * 100 if tp + fp > 0 else 0
+        recall = tp / (tp + fn) * 100 if tp + fn > 0 else 0
         if precision + recall > 0:
             f1 = 2 * precision * recall / (precision + recall)
         else:
@@ -79,9 +72,9 @@ def ner_token_f1(y_true, y_pred, print_results=False):
 
     results['__total__'], accuracy, total_true_entities, total_predicted_entities, total_correct = _global_stats_f1(
         results)
-    n_tokens = len(y_true)
     if print_results:
         log.debug('TOKEN LEVEL F1')
+        n_tokens = len(y_true)
         _print_conll_report(results, accuracy, total_true_entities, total_predicted_entities, n_tokens, total_correct)
     return results['__total__']['f1']
 
@@ -107,16 +100,12 @@ def _print_conll_report(results, accuracy, total_true_entities, total_predicted_
 
     if not short_report:
         for tag in tags:
-            if entity_of_interest is not None:
-                if entity_of_interest in tag:
-                    s += '\t' + tag + ': precision:  {tot_prec:.2f}%; ' \
-                                      'recall:  {tot_recall:.2f}%; ' \
-                                      'F1:  {tot_f1:.2f} ' \
-                                      '{tot_predicted}\n\n'.format(tot_prec=results[tag]['precision'],
-                                                                   tot_recall=results[tag]['recall'],
-                                                                   tot_f1=results[tag]['f1'],
-                                                                   tot_predicted=results[tag]['n_pred'])
-            elif tag != '__total__':
+            if (
+                entity_of_interest is not None
+                and entity_of_interest in tag
+                or entity_of_interest is None
+                and tag != '__total__'
+            ):
                 s += '\t' + tag + ': precision:  {tot_prec:.2f}%; ' \
                                   'recall:  {tot_recall:.2f}%; ' \
                                   'F1:  {tot_f1:.2f} ' \
@@ -157,12 +146,12 @@ def _global_stats_f1(results):
         total_f1 += results[tag]['f1'] * n_true
     if total_true_entities > 0:
         accuracy = total_correct / total_true_entities * 100
-        total_recall = total_recall / total_true_entities
+        total_recall /= total_true_entities
     else:
         accuracy = 0
         total_recall = 0
     if total_predicted_entities > 0:
-        total_precision = total_precision / total_predicted_entities
+        total_precision /= total_predicted_entities
     else:
         total_precision = 0
 
@@ -281,7 +270,6 @@ def precision_recall_f1(y_true, y_pred, print_results=True, short_report=False, 
         results[tag] = OrderedDict()
     results['__total__'] = OrderedDict()
     n_tokens = len(y_true)
-    total_correct = 0
     # Firstly we find all chunks in the ground truth and prediction
     # For each chunk we write starting and ending indices
 
@@ -312,9 +300,9 @@ def precision_recall_f1(y_true, y_pred, print_results=True, short_report=False, 
             prev_tag_pred = yp
             count += 1
 
-        if len(true_chunk) > 0 and not isinstance(true_chunk[-1], tuple):
+        if true_chunk and not isinstance(true_chunk[-1], tuple):
             true_chunk[-1] = (true_chunk[-1], count - 1)
-        if len(pred_chunk) > 0 and not isinstance(pred_chunk[-1], tuple):
+        if pred_chunk and not isinstance(pred_chunk[-1], tuple):
             pred_chunk[-1] = (pred_chunk[-1], count - 1)
 
         # Then we find all correctly classified intervals
@@ -325,14 +313,8 @@ def precision_recall_f1(y_true, y_pred, print_results=True, short_report=False, 
         fn = len(true_chunk) - tp
         # False positive
         fp = len(pred_chunk) - tp
-        if tp + fp > 0:
-            precision = tp / (tp + fp) * 100
-        else:
-            precision = 0
-        if tp + fn > 0:
-            recall = tp / (tp + fn) * 100
-        else:
-            recall = 0
+        precision = tp / (tp + fp) * 100 if tp + fp > 0 else 0
+        recall = tp / (tp + fn) * 100 if tp + fn > 0 else 0
         if precision + recall > 0:
             f1 = 2 * precision * recall / (precision + recall)
         else:
@@ -351,6 +333,7 @@ def precision_recall_f1(y_true, y_pred, print_results=True, short_report=False, 
     results['__total__']['n_true'] = total_true_entities
 
     if print_results:
+        total_correct = 0
         s = 'processed {len} tokens ' \
             'with {tot_true} phrases; ' \
             'found: {tot_pred} phrases;' \
@@ -368,16 +351,12 @@ def precision_recall_f1(y_true, y_pred, print_results=True, short_report=False, 
 
         if not short_report:
             for tag in tags:
-                if entity_of_interest is not None:
-                    if entity_of_interest in tag:
-                        s += '\t' + tag + ': precision:  {tot_prec:.2f}%; ' \
-                                          'recall:  {tot_recall:.2f}%; ' \
-                                          'F1:  {tot_f1:.2f} ' \
-                                          '{tot_predicted}\n\n'.format(tot_prec=results[tag]['precision'],
-                                                                       tot_recall=results[tag]['recall'],
-                                                                       tot_f1=results[tag]['f1'],
-                                                                       tot_predicted=results[tag]['n_pred'])
-                elif tag != '__total__':
+                if (
+                    entity_of_interest is not None
+                    and entity_of_interest in tag
+                    or entity_of_interest is None
+                    and tag != '__total__'
+                ):
                     s += '\t' + tag + ': precision:  {tot_prec:.2f}%; ' \
                                       'recall:  {tot_recall:.2f}%; ' \
                                       'F1:  {tot_f1:.2f} ' \

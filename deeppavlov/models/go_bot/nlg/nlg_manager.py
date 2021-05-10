@@ -97,8 +97,7 @@ class NLGManager(NLGManagerInterface):
         Returns:
             the text generated for the passed action id and slot values.
         """
-        text = self.templates.templates[action_id].generate_text(slots)
-        return text
+        return self.templates.templates[action_id].generate_text(slots)
 
     def num_of_known_actions(self) -> int:
         """

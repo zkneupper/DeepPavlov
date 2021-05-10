@@ -54,10 +54,7 @@ def stacked_cnn(units: tf.Tensor,
     """
     l2_reg = tf.nn.l2_loss if add_l2_losses else None
     for n_layer, n_hidden in enumerate(n_hidden_list):
-        if use_dilation:
-            dilation_rate = 2 ** n_layer
-        else:
-            dilation_rate = 1
+        dilation_rate = 2 ** n_layer if use_dilation else 1
         units = tf.layers.conv1d(units,
                                  n_hidden,
                                  filter_width,
@@ -97,10 +94,7 @@ def dense_convolutional_network(units: tf.Tensor,
     units_list = [units]
     for n_layer, n_filters in enumerate(n_hidden_list):
         total_units = tf.concat(units_list, axis=-1)
-        if use_dilation:
-            dilation_rate = 2 ** n_layer
-        else:
-            dilation_rate = 1
+        dilation_rate = 2 ** n_layer if use_dilation else 1
         units = tf.layers.conv1d(total_units,
                                  n_filters,
                                  filter_width,
@@ -318,10 +312,7 @@ def stacked_highway_cnn(units: tf.Tensor,
         # Projection if needed
         if input_units.get_shape().as_list()[-1] != n_hidden:
             input_units = tf.layers.dense(input_units, n_hidden)
-        if use_dilation:
-            dilation_rate = 2 ** n_layer
-        else:
-            dilation_rate = 1
+        dilation_rate = 2 ** n_layer if use_dilation else 1
         units = tf.layers.conv1d(units,
                                  n_hidden,
                                  filter_width,
@@ -369,8 +360,7 @@ def embedding_layer(token_indices=None,
     else:
         tok_mat = np.random.randn(n_tokens, token_embedding_dim).astype(np.float32) / np.sqrt(token_embedding_dim)
     tok_emb_mat = tf.Variable(tok_mat, name=name, trainable=trainable)
-    embedded_tokens = tf.nn.embedding_lookup(tok_emb_mat, token_indices)
-    return embedded_tokens
+    return tf.nn.embedding_lookup(tok_emb_mat, token_indices)
 
 
 def character_embedding_network(char_placeholder: tf.Tensor,
@@ -411,13 +401,17 @@ def character_embedding_network(char_placeholder: tf.Tensor,
         c_emb = tf.nn.embedding_lookup(char_emb_var, char_placeholder)
 
         # Character embedding network
-        conv_results_list = []
-        for filter_width in filter_widths:
-            conv_results_list.append(tf.layers.conv2d(c_emb,
-                                                      char_embedding_dim,
-                                                      (1, filter_width),
-                                                      padding='same',
-                                                      kernel_initializer=INITIALIZER))
+        conv_results_list = [
+            tf.layers.conv2d(
+                c_emb,
+                char_embedding_dim,
+                (1, filter_width),
+                padding='same',
+                kernel_initializer=INITIALIZER,
+            )
+            for filter_width in filter_widths
+        ]
+
         units = tf.concat(conv_results_list, axis=3)
         units = tf.reduce_max(units, axis=2)
         if highway_on_top:
@@ -473,8 +467,12 @@ def additive_self_attention(units, n_hidden=None, n_output_features=None, activa
     query = tf.layers.dense(units_pairs, n_hidden, activation=tf.tanh, kernel_initializer=INITIALIZER())
     attention = tf.nn.softmax(tf.layers.dense(query, 1), dim=2)
     attended_units = tf.reduce_sum(attention * expand_tile(units, 1), axis=2)
-    output = tf.layers.dense(attended_units, n_output_features, activation, kernel_initializer=INITIALIZER())
-    return output
+    return tf.layers.dense(
+        attended_units,
+        n_output_features,
+        activation,
+        kernel_initializer=INITIALIZER(),
+    )
 
 
 def multiplicative_self_attention(units, n_hidden=None, n_output_features=None, activation=None):
@@ -502,8 +500,12 @@ def multiplicative_self_attention(units, n_hidden=None, n_output_features=None, 
     scores = tf.reduce_sum(queries * keys, axis=3, keep_dims=True)
     attention = tf.nn.softmax(scores, dim=2)
     attended_units = tf.reduce_sum(attention * expand_tile(units, 1), axis=2)
-    output = tf.layers.dense(attended_units, n_output_features, activation, kernel_initializer=INITIALIZER())
-    return output
+    return tf.layers.dense(
+        attended_units,
+        n_output_features,
+        activation,
+        kernel_initializer=INITIALIZER(),
+    )
 
 
 def cudnn_gru(units, n_hidden, n_layers=1, trainable_initial_states=False,

@@ -16,9 +16,9 @@ class VerboseJSONNLGResponse(JSONNLGResponse):
 
     @staticmethod
     def from_json_nlg_response(json_nlg_response: JSONNLGResponse) -> "VerboseJSONNLGResponse":
-        verbose_json_nlg_response = VerboseJSONNLGResponse(json_nlg_response.slot_values,
-                                                           json_nlg_response.actions_tuple)
-        return verbose_json_nlg_response
+        return VerboseJSONNLGResponse(
+            json_nlg_response.slot_values, json_nlg_response.actions_tuple
+        )
 
     def get_nlu_info(self):
         intent_name = "start" if self.actions_tuple[0] == "start" else self.actions_tuple[0][len("utter_"):].split('{')[0]

@@ -35,8 +35,7 @@ class StrTokenReverser(Component):
     def _reverse_str(raw_string):
         splitted = raw_string.split()
         splitted.reverse()
-        string = ' '.join(splitted)
-        return string
+        return ' '.join(splitted)
 
     @staticmethod
     def _reverse_tokens(raw_tokens):

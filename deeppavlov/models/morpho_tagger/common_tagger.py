@@ -61,8 +61,8 @@ def make_pos_and_tag(tag: str, sep: str = ",",
         tag = tag.split("|") if tag != "" else []
         if return_mode in ["dict", "sorted_items"]:
             tag = dict(tuple(elem.split("=")) for elem in tag)
-            if return_mode == "sorted_items":
-                tag = tuple(sorted(tag.items()))
+        if return_mode == "sorted_items":
+            tag = tuple(sorted(tag.items()))
     return pos, tag
 
 
@@ -119,10 +119,7 @@ def get_tag_distance(first, second, first_sep=",", second_sep=" "):
     dist = int(not _are_equal_pos(first_pos, second_pos))
     for key, value in first_feats.items():
         other = second_feats.get(key)
-        if other is None:
-            dist += int(key not in IDLE_FEATURES)
-        else:
-            dist += int(value != other)
+        dist += int(key not in IDLE_FEATURES) if other is None else int(value != other)
     for key in second_feats:
         dist += int(key not in first_feats and key not in IDLE_FEATURES)
     return dist

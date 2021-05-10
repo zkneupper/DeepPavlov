@@ -50,7 +50,7 @@ class Dstc2NerDatasetIterator(DataLearningIterator):
                    data: List[Tuple[Any, Any]],
                    *args, **kwargs) -> List[Tuple[Any, Any]]:
         processed_data = list()
-        processed_texts = dict()
+        processed_texts = {}
         for x, y in data:
             text = x['text']
             if not text.strip():

@@ -152,7 +152,7 @@ class GoalOrientedBot(NNModel):
         self.policy = PolicyNetwork(policy_network_params, tokens_dims, features_params,
                                     policy_load_path, policy_save_path, **kwargs)
 
-        self.dialogues_cached_features = dict()
+        self.dialogues_cached_features = {}
 
         self.reset()
 
@@ -259,8 +259,9 @@ class GoalOrientedBot(NNModel):
         action_id = self.nlg_manager.get_action_id(utterance_response_info_dict['act'])
         utterance_target = UtteranceTarget(action_id)
 
-        utterance_data_entry = UtteranceDataEntry.from_features_and_target(utterance_features, utterance_target)
-        return utterance_data_entry
+        return UtteranceDataEntry.from_features_and_target(
+            utterance_features, utterance_target
+        )
 
     def extract_features_from_utterance_text(self, text, tracker, keep_tracker_state=False) -> UtteranceFeatures:
         """

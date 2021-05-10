@@ -37,10 +37,10 @@ class MockJSONNLGManager(NLGManagerInterface):
 
         individual_actions2slots = self._load_actions2slots_mapping(actions2slots_path)
         possible_actions_combinations_tuples = sorted(
-            set(actions_combination_tuple
-                for actions_combination_tuple
-                in self._extract_actions_combinations(data_path)),
-            key=lambda x: '+'.join(x))
+            set(self._extract_actions_combinations(data_path)),
+            key=lambda x: '+'.join(x),
+        )
+
 
         self.action_tuples2ids = {action_tuple: action_tuple_idx
                                   for action_tuple_idx, action_tuple
@@ -49,9 +49,12 @@ class MockJSONNLGManager(NLGManagerInterface):
 
         self.action_tuples_ids2slots = {}  # todo: typehint tuples somehow
         for actions_combination_tuple in possible_actions_combinations_tuples:
-            actions_combination_slots = set(slot
-                                            for action in actions_combination_tuple
-                                            for slot in individual_actions2slots.get(action, []))
+            actions_combination_slots = {
+                slot
+                for action in actions_combination_tuple
+                for slot in individual_actions2slots.get(action, [])
+            }
+
             actions_combination_tuple_id = self.action_tuples2ids[actions_combination_tuple]
             self.action_tuples_ids2slots[actions_combination_tuple_id] = actions_combination_slots
 
@@ -90,7 +93,7 @@ class MockJSONNLGManager(NLGManagerInterface):
             with open(actions2slots_json_path, encoding="utf-8") as actions2slots_json_f:
                 actions2slots = json.load(actions2slots_json_f)
         else:
-            actions2slots = dict()
+            actions2slots = {}
             log.info(f"INSIDE {__class__.__name__} _load_actions2slots_mapping(): "
                       f"actions2slots_json_path={actions2slots_json_path} DOES NOT EXIST. "
                       f"initialized actions2slots mapping with an empty one: {str(actions2slots)}")

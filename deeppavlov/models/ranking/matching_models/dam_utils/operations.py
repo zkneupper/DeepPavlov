@@ -218,15 +218,15 @@ def dense(x, out_dimension=None, add_bias=True, initializer=tf.orthogonal_initia
         shape=[x.shape[-1], out_dimension],
         dtype=tf.float32,
         initializer=initializer)
-    if add_bias:
-        bias = tf.get_variable(
-            name='bias',
-            shape=[1],
-            dtype=tf.float32,
-            initializer=tf.zeros_initializer())
-        return tf.einsum('bik,kj->bij', x, W) + bias
-    else:
+    if not add_bias:
         return tf.einsum('bik,kj->bij', x, W)
+
+    bias = tf.get_variable(
+        name='bias',
+        shape=[1],
+        dtype=tf.float32,
+        initializer=tf.zeros_initializer())
+    return tf.einsum('bik,kj->bij', x, W) + bias
 
 
 def matmul_2d(x, out_dimension, drop_prob=None):

@@ -133,17 +133,17 @@ class PolicyNetwork(LRScheduledTFModel):
         intent_as_key = attn.get('intent_as_key', False)
         key_size = PolicyNetwork.calc_attn_key_size(features_params, action_as_key, intent_as_key)
 
-        gobot_attn_params = GobotAttnParams(max_num_tokens=attn.get("max_num_tokens"),
-                                            hidden_size=attn.get("hidden_size"),
-                                            token_size=token_size,
-                                            key_size=key_size,
-                                            type_=attn.get("type"),
-                                            projected_align=attn.get("projected_align"),
-                                            depth=attn.get("depth"),
-                                            action_as_key=action_as_key,
-                                            intent_as_key=intent_as_key)
-
-        return gobot_attn_params
+        return GobotAttnParams(
+            max_num_tokens=attn.get("max_num_tokens"),
+            hidden_size=attn.get("hidden_size"),
+            token_size=token_size,
+            key_size=key_size,
+            type_=attn.get("type"),
+            projected_align=attn.get("projected_align"),
+            depth=attn.get("depth"),
+            action_as_key=action_as_key,
+            intent_as_key=intent_as_key,
+        )
 
     @staticmethod
     def calc_attn_key_size(shared_go_bot_params: SharedGoBotParams, action_as_key: bool, intent_as_key: bool) -> int:
@@ -375,9 +375,7 @@ class PolicyNetwork(LRScheduledTFModel):
 
         probs, prediction, state = self.sess.run([self._probs, self._prediction, self._state], feed_dict=feed_dict)
 
-        policy_prediction = PolicyPrediction(probs, prediction, state[0], state[1])
-
-        return policy_prediction
+        return PolicyPrediction(probs, prediction, state[0], state[1])
 
     def train_on_batch(self,
                        batch_dialogues_features: BatchDialoguesFeatures,

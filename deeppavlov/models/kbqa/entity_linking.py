@@ -329,10 +329,10 @@ class EntityLinker(Component, Serializable):
                 for ind, score in zip(ind_list, scores_list):
                     start_ind, end_ind = self.word_to_idlist[self.word_list[ind]]
                     for entity in self.entities_list[start_ind:end_ind]:
-                        if entity in candidate_entities:
-                            if score > candidate_entities[entity]:
-                                candidate_entities[entity] = score
-                        else:
+                        if (
+                            score > candidate_entities[entity]
+                            or entity not in candidate_entities
+                        ):
                             candidate_entities[entity] = score
                 candidate_entities_dict[index] += [(entity, cand_entity_len, score)
                                                    for (entity, cand_entity_len), score in candidate_entities.items()]
@@ -348,7 +348,11 @@ class EntityLinker(Component, Serializable):
                 log.debug(f"candidate_entities before ranking {candidate_entities[:10]}")
                 candidate_entities = [candidate_entity + (self.entities_ranking_dict.get(candidate_entity[0], 0),)
                                       for candidate_entity in candidate_entities]
-                candidate_entities_str = '\n'.join([str(candidate_entity) for candidate_entity in candidate_entities])
+                candidate_entities_str = '\n'.join(
+                    str(candidate_entity)
+                    for candidate_entity in candidate_entities
+                )
+
                 candidate_entities = sorted(candidate_entities, key=lambda x: (x[1], x[2]), reverse=True)
                 log.debug(f"candidate_entities {candidate_entities[:10]}")
                 entities_scores = {entity: (substr_score, pop_score)
@@ -370,8 +374,7 @@ class EntityLinker(Component, Serializable):
 
     def morph_parse(self, word):
         morph_parse_tok = self.morph.parse(word)[0]
-        normal_form = morph_parse_tok.normal_form
-        return normal_form
+        return morph_parse_tok.normal_form
 
     def sum_scores(self, candidate_entities: List[Tuple[str, int]], substr_len: int) -> List[Tuple[str, float]]:
         entities_with_scores_sum = defaultdict(int)
@@ -381,10 +384,10 @@ class EntityLinker(Component, Serializable):
         entities_with_scores = {}
         for (entity, cand_entity_len), scores_sum in entities_with_scores_sum.items():
             score = min(scores_sum, cand_entity_len) / max(substr_len, cand_entity_len)
-            if entity in entities_with_scores:
-                if score > entities_with_scores[entity]:
-                    entities_with_scores[entity] = score
-            else:
+            if (
+                score > entities_with_scores[entity]
+                or entity not in entities_with_scores
+            ):
                 entities_with_scores[entity] = score
         entities_with_scores = list(entities_with_scores.items())
 

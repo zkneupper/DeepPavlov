@@ -31,12 +31,11 @@ class KBQAReader(DatasetReader):
             url = 'http://files.deeppavlov.ai/kbqa/test_set_with_answers.zip'
             data_path.mkdir(exist_ok=True, parents=True)
             download_decompress(url, data_path)
-        dataset = {}
-
-        dataset["test"] = self.parse_ner_file(data_path / test_set_filename)
-        dataset["train"] = []
-        dataset["valid"] = []
-        return dataset
+        return {
+            "test": self.parse_ner_file(data_path / test_set_filename),
+            "train": [],
+            "valid": [],
+        }
 
     def parse_ner_file(self, file_name: Path):
         samples = []

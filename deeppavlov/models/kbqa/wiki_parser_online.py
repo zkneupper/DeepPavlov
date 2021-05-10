@@ -38,23 +38,23 @@ class WikiParserOnline:
     def __call__(self, parser_info_list: List[str], queries_list: List[Any]) -> List[Any]:
         wiki_parser_output = []
         for parser_info, query in zip(parser_info_list, queries_list):
-            if parser_info == "query_execute":
+            if parser_info == "find_label":
+                wiki_parser_output.append(self.find_label(*query))
+            elif parser_info == "find_rels":
+                wiki_parser_output += self.find_rels(*query)
+            elif parser_info == "query_execute":
                 query_to_execute, return_if_found = query
                 candidate_output = self.get_answer(query_to_execute)
                 wiki_parser_output.append(candidate_output)
                 if return_if_found and candidate_output:
                     return wiki_parser_output
-            elif parser_info == "find_rels":
-                wiki_parser_output += self.find_rels(*query)
-            elif parser_info == "find_label":
-                wiki_parser_output.append(self.find_label(*query))
             else:
                 raise ValueError("Unsupported query type")
         return wiki_parser_output
 
     def get_answer(self, query: str) -> List[Dict[str, Dict[str, str]]]:
         data = []
-        for i in range(5):
+        for _ in range(5):
             try:
                 resp = requests.get(self.url,
                                     params={'query': query, 'format': 'json'},

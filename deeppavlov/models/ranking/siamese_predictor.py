@@ -87,35 +87,34 @@ class SiamesePredictor(Component):
             pass
 
         if self.ranking:
-            if len(context) == self.num_context_turns:
-                scores = []
-                if self.attention:
-                    for i in range(len(self.preproc_responses) // self.batch_size + 1):
-                        responses = self.preproc_responses[i * self.batch_size: (i + 1) * self.batch_size]
-                        b = [context + el for el in responses]
-                        b = self.model._make_batch(b)
-                        sc = self.model._predict_on_batch(b)
-                        scores += list(sc)
-                else:
-                    b = self.model._make_batch([context])
-                    context_emb = self.model._predict_context_on_batch(b)
-                    context_emb = np.squeeze(context_emb, axis=0)
-                    scores = context_emb @ self.response_embeddings.T
-                ids = np.flip(np.argsort(scores), -1)
-                return [[self.responses[el] for el in ids[:self.interact_pred_num]]]
-            else:
+            if len(context) != self.num_context_turns:
                 return ["Please, provide contexts separated by '&' in the number equal to that used while training."]
 
-        else:
-            if len(context) == 2:
-                b = self.model._make_batch([context])
-                sc = self.model._predict_on_batch(b)[0]
-                if sc > 0.5:
-                    return ["This is a paraphrase."]
-                else:
-                    return ["This is not a paraphrase."]
+            scores = []
+            if self.attention:
+                for i in range(len(self.preproc_responses) // self.batch_size + 1):
+                    responses = self.preproc_responses[i * self.batch_size: (i + 1) * self.batch_size]
+                    b = [context + el for el in responses]
+                    b = self.model._make_batch(b)
+                    sc = self.model._predict_on_batch(b)
+                    scores += list(sc)
             else:
+                b = self.model._make_batch([context])
+                context_emb = self.model._predict_context_on_batch(b)
+                context_emb = np.squeeze(context_emb, axis=0)
+                scores = context_emb @ self.response_embeddings.T
+            ids = np.flip(np.argsort(scores), -1)
+            return [[self.responses[el] for el in ids[:self.interact_pred_num]]]
+        else:
+            if len(context) != 2:
                 return ["Please, provide two sentences separated by '&'."]
+
+            b = self.model._make_batch([context])
+            sc = self.model._predict_on_batch(b)[0]
+            if sc > 0.5:
+                return ["This is a paraphrase."]
+            else:
+                return ["This is not a paraphrase."]
 
     def reset(self) -> None:
         pass
@@ -141,6 +140,6 @@ class SiamesePredictor(Component):
     def rebuild_responses(self, candidates) -> None:
         self.attention = True
         self.interact_pred_num = 1
-        self.preproc_responses = list()
+        self.preproc_responses = []
         self.responses = {idx: sentence for idx, sentence in enumerate(candidates)}
         self._build_preproc_responses()

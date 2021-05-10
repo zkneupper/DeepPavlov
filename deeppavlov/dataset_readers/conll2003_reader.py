@@ -87,7 +87,7 @@ class Conll2003DatasetReader(DatasetReader):
                         chunk_tags = ['O']
                         tags = ['O']
                 elif len(line) < 2:
-                    if (len(tokens) > 0) and (tokens != [self.docstart_token]):
+                    if tokens and tokens != [self.docstart_token]:
                         x = tokens if not self.x_is_tuple else (tokens,)
                         if self.provide_pos:
                             x = x + (pos_tags,)

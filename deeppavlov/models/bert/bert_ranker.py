@@ -100,10 +100,9 @@ class BertRankerModel(BertClassifierModel):
                 pred = self.sess.run(self.y_probas, feed_dict=feed_dict)
             predictions.append(pred[:, 1])
         if len(features_li) == 1:
-            predictions = predictions[0]
+            return predictions[0]
         else:
-            predictions = np.hstack([np.expand_dims(el, 1) for el in predictions])
-        return predictions
+            return np.hstack([np.expand_dims(el, 1) for el in predictions])
 
 
 @register('bert_sep_ranker')
@@ -331,10 +330,9 @@ class BertSepRankerModel(LRScheduledTFModel):
             pred = self.sess.run(self.y_probas, feed_dict=feed_dict)
             predictions.append(pred)
         if len(features_li) == 1:
-            predictions = predictions[0]
+            return predictions[0]
         else:
-            predictions = np.hstack([np.expand_dims(el, 1) for el in predictions])
-        return predictions
+            return np.hstack([np.expand_dims(el, 1) for el in predictions])
 
 
 @register('bert_sep_ranker_predictor')

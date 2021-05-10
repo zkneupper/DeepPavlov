@@ -271,7 +271,7 @@ class SquadVocabEmbedder(Estimator):
 
     def fit(self, contexts: Tuple[List[str], ...], questions: Tuple[List[str]], *args, **kwargs):
         self.vocab = Counter()
-        self.embedding_dict = dict()
+        self.embedding_dict = {}
         if not self.loaded:
             logger.info('SquadVocabEmbedder: fitting with {}s'.format(self.level))
             if self.level == 'token':
@@ -398,10 +398,7 @@ class SquadBertMappingPreprocessor(Component):
         for batch_counter, (context, features) in enumerate(zip(contexts, bert_features)):
             if self.do_lower_case:
                 context = context.lower()
-            if len(args) > 0:
-                subtokens = args[0][batch_counter]
-            else:
-                subtokens = features.tokens
+            subtokens = args[0][batch_counter] if len(args) > 0 else features.tokens
             context_start = subtokens.index('[SEP]') + 1
             idx = 0
             subtok2char = {}

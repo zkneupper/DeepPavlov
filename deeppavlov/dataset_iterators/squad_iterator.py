@@ -95,8 +95,7 @@ class MultiSquadIterator(DataLearningIterator):
         self.np_random = np.random.RandomState(seed)
         super().__init__(data, seed, shuffle, *args, **kwargs)
 
-    def gen_batches(self, batch_size: int, data_type: str = 'train', shuffle: bool = None) \
-            -> Generator[Tuple[Tuple[Tuple[str, str]], Tuple[List[str], List[int]]], None, None]:
+    def gen_batches(self, batch_size: int, data_type: str = 'train', shuffle: bool = None) -> Generator[Tuple[Tuple[Tuple[str, str]], Tuple[List[str], List[int]]], None, None]:
 
         if shuffle is None:
             shuffle = self.shuffle
@@ -120,7 +119,7 @@ class MultiSquadIterator(DataLearningIterator):
                 ans_contexts = [c for c in contexts if len(c['answer']) > 0]
                 noans_contexts = [c for c in contexts if len(c['answer']) == 0]
                 # sample context with answer or without answer
-                if random.rand() < self.with_answer_rate or len(noans_contexts) == 0:
+                if random.rand() < self.with_answer_rate or not noans_contexts:
                     # select random context with answer
                     context = random.choice(ans_contexts)
                 else:
@@ -195,8 +194,7 @@ class MultiSquadRetrIterator(DataLearningIterator):
         if self.shuffle:
             raise RuntimeError('MultiSquadIterator doesn\'t support shuffling.')
 
-    def gen_batches(self, batch_size: int, data_type: str = 'train', shuffle: bool = None) \
-            -> Generator[Tuple[Tuple[Tuple[str, str]], Tuple[List[str], List[int]]], None, None]:
+    def gen_batches(self, batch_size: int, data_type: str = 'train', shuffle: bool = None) -> Generator[Tuple[Tuple[Tuple[str, str]], Tuple[List[str], List[int]]], None, None]:
 
         if shuffle is None:
             shuffle = self.shuffle
@@ -214,7 +212,7 @@ class MultiSquadRetrIterator(DataLearningIterator):
             end_of_file = False
             while not end_of_file:
                 batch = []
-                for i in range(batch_size):
+                for _ in range(batch_size):
                     line = fin.readline()
                     if len(line) == 0:
                         end_of_file = True
@@ -225,11 +223,11 @@ class MultiSquadRetrIterator(DataLearningIterator):
                     contexts = qcas['contexts']
                     ans_contexts = [c for c in contexts if len(c['answer']) > 0]
                     noans_contexts = [c for c in contexts if len(c['answer']) == 0]
-                    ans_clen = len(ans_contexts)
                     noans_clen = len(noans_contexts)
                     # sample context with answer or without answer
                     with_answer_rate = self.with_answer_rate
                     if with_answer_rate is None:
+                        ans_clen = len(ans_contexts)
                         with_answer_rate = 1.0 if noans_clen == 0 else ans_clen / (ans_clen + noans_clen)
 
                     if random.rand() < with_answer_rate or noans_clen == 0:

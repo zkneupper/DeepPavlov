@@ -140,5 +140,4 @@ class RuObscenityClassifier(Component):
         Returns:
             list of bool:  True is for obscene text, False is for not obscene text
         """
-        decisions = list(map(self._check_obscenity, texts))
-        return decisions
+        return list(map(self._check_obscenity, texts))

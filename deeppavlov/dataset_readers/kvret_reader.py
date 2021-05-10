@@ -63,7 +63,7 @@ class KvretDatasetReader(DatasetReader):
             download_decompress(self.url, data_path)
             mark_done(data_path)
 
-        data = {
+        return {
             'train': self._read_from_file(
                 Path(data_path, self._data_fname('train')), dialogs),
             'valid': self._read_from_file(
@@ -71,7 +71,6 @@ class KvretDatasetReader(DatasetReader):
             'test': self._read_from_file(
                 Path(data_path, self._data_fname('test')), dialogs)
         }
-        return data
 
     @classmethod
     def _read_from_file(cls, file_path, dialogs=False):

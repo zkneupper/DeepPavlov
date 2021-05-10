@@ -36,10 +36,7 @@ def recall_at_k(y_true: List[int], y_pred: List[List[np.ndarray]], k: int):
     num_examples = float(len(y_pred))
     predictions = np.array(y_pred)
     predictions = np.flip(np.argsort(predictions, -1), -1)[:, :k]
-    num_correct = 0
-    for el in predictions:
-        if 0 in el:
-            num_correct += 1
+    num_correct = sum(0 in el for el in predictions)
     return float(num_correct) / num_examples
 
 

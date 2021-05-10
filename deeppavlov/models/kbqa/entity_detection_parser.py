@@ -118,10 +118,10 @@ class EntityDetectionParser(Component):
         tag_probas = []
         for proba in probas:
             tag_num = np.argmax(proba)
-            if tag_num in self.et_prob_ind:
-                if proba[tag_num] < self.thres_proba:
-                    tag_num = 0
-            else:
+            if (
+                proba[tag_num] < self.thres_proba
+                or tag_num not in self.et_prob_ind
+            ):
                 tag_num = 0
             tags.append(self.tag_ind_dict[tag_num])
             tag_probas.append(proba[tag_num])

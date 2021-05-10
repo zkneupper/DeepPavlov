@@ -134,7 +134,7 @@ class ErrorModel(Estimator):
     def _infer_instance(self, instance: List[str]) -> List[List[Tuple[float, str]]]:
         candidates = []
         for incorrect in instance:
-            if any([c not in self.dictionary.alphabet for c in incorrect]):
+            if any(c not in self.dictionary.alphabet for c in incorrect):
                 candidates.append([(0, incorrect)])
             else:
                 res = self.find_candidates(incorrect, prop_threshold=1e-6)

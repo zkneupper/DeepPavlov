@@ -46,8 +46,7 @@ class FilePathsReader(DatasetReader):
             ``valid`` and ``test`` keys.
         """
 
-        dataset = dict()
-        dataset["train"] = self._get_files(data_path, train)
+        dataset = {"train": self._get_files(data_path, train)}
         dataset["valid"] = self._get_files(data_path, valid)
         dataset["test"] = self._get_files(data_path, test)
         return dataset

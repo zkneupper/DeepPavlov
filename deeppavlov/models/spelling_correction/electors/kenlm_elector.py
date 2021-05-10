@@ -54,7 +54,7 @@ class KenlmElector(Component):
         return [self._infer_instance(candidates) for candidates in batch]
 
     def _infer_instance(self, candidates: List[List[Tuple[float, str]]]):
-        candidates = candidates + [[(0, '</s>')]]
+        candidates += [[(0, '</s>')]]
         state = kenlm.State()
         self.lm.BeginSentenceWrite(state)
         beam = [(0, state, [])]

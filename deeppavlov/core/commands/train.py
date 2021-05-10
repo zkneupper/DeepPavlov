@@ -35,14 +35,13 @@ def read_data_by_config(config: dict):
     if dataset_config:
         config.pop('dataset')
         ds_type = dataset_config['type']
-        if ds_type == 'classification':
-            reader = {'class_name': 'basic_classification_reader'}
-            iterator = {'class_name': 'basic_classification_iterator'}
-            config['dataset_reader'] = {**dataset_config, **reader}
-            config['dataset_iterator'] = {**dataset_config, **iterator}
-        else:
+        if ds_type != 'classification':
             raise Exception("Unsupported dataset type: {}".format(ds_type))
 
+        reader = {'class_name': 'basic_classification_reader'}
+        iterator = {'class_name': 'basic_classification_iterator'}
+        config['dataset_reader'] = {**dataset_config, **reader}
+        config['dataset_iterator'] = {**dataset_config, **iterator}
     try:
         reader_config = dict(config['dataset_reader'])
     except KeyError:

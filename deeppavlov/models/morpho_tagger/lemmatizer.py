@@ -67,8 +67,10 @@ class BasicLemmatizer(Serializable):
             raise ValueError("There must be the same number of tag sentences as the number of word sentences.")
         if any((len(elem[0]) != len(elem[1])) for elem in zip(data, tags)):
             raise ValueError("Tag sentence must be of the same length as the word sentence.")
-        answer = [[self._lemmatize(word, tag) for word, tag in zip(*elem)] for elem in zip(data, tags)]
-        return answer
+        return [
+            [self._lemmatize(word, tag) for word, tag in zip(*elem)]
+            for elem in zip(data, tags)
+        ]
 
 
 @register("UD_pymorphy_lemmatizer")
@@ -99,11 +101,11 @@ class UDPymorphyLemmatizer(BasicLemmatizer):
         pass
 
     def _reset(self):
-        self.memo = dict()
+        self.memo = {}
 
     def _extract_lemma(self, parse: Parse) -> str:
         special_feats = [x for x in self.SPECIAL_FEATURES if x in parse.tag]
-        if len(special_feats) == 0:
+        if not special_feats:
             return parse.normal_form
         # here we process surnames and patronyms since PyMorphy lemmatizes them incorrectly
         for other in parse.lexeme:

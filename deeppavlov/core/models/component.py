@@ -49,4 +49,3 @@ class Component(metaclass=ABCMeta):
         if isinstance(self, Serializable):
             log.warning(f'Method for {self.__class__.__name__} deserialization is not implemented!'
                         f' Please, use traditional load_path for this component')
-        pass

@@ -62,14 +62,13 @@ def general_attention(key, context, hidden_size, projected_align=False):
     if projected_align:
         log.info("Using projected attention alignment")
         t_context = tf.transpose(bilstm_output, [0, 2, 1])
-        output = tf.reshape(tf.matmul(t_context, attn),
+        return tf.reshape(tf.matmul(t_context, attn),
                             shape=[batch_size, -1, hidden_size])
     else:
         log.info("Using without projected attention alignment")
         t_context = tf.transpose(r_context, [0, 2, 1])
-        output = tf.reshape(tf.matmul(t_context, attn),
+        return tf.reshape(tf.matmul(t_context, attn),
                             shape=[batch_size, -1, token_size])
-    return output
 
 
 def light_general_attention(key, context, hidden_size, projected_align=False):
@@ -102,14 +101,13 @@ def light_general_attention(key, context, hidden_size, projected_align=False):
     if projected_align:
         log.info("Using projected attention alignment")
         t_context = tf.transpose(projected_context, [0, 2, 1])
-        output = tf.reshape(tf.matmul(t_context, attn),
+        return tf.reshape(tf.matmul(t_context, attn),
                             shape=[batch_size, -1, hidden_size])
     else:
         log.info("Using without projected attention alignment")
         t_context = tf.transpose(r_context, [0, 2, 1])
-        output = tf.reshape(tf.matmul(t_context, attn),
+        return tf.reshape(tf.matmul(t_context, attn),
                             shape=[batch_size, -1, token_size])
-    return output
 
 
 def cs_general_attention(key, context, hidden_size, depth, projected_align=False):
@@ -155,16 +153,13 @@ def cs_general_attention(key, context, hidden_size, depth, projected_align=False
         h_state_for_attn_alignment = bilstm_output
         aligned_h_state = csoftmax_attention.attention_gen_block(
             h_state_for_sketch, h_state_for_attn_alignment, key, depth)
-        output = \
-            tf.reshape(aligned_h_state, shape=[batch_size, -1, depth * hidden_size])
+        return tf.reshape(aligned_h_state, shape=[batch_size, -1, depth * hidden_size])
     else:
         log.info("Using without projected attention alignment")
         h_state_for_attn_alignment = projected_context
         aligned_h_state = csoftmax_attention.attention_gen_block(
             h_state_for_sketch, h_state_for_attn_alignment, key, depth)
-        output = \
-            tf.reshape(aligned_h_state, shape=[batch_size, -1, depth * token_size])
-    return output
+        return tf.reshape(aligned_h_state, shape=[batch_size, -1, depth * token_size])
 
 
 def bahdanau_attention(key, context, hidden_size, projected_align=False):
@@ -215,14 +210,13 @@ def bahdanau_attention(key, context, hidden_size, projected_align=False):
     if projected_align:
         log.info("Using projected attention alignment")
         t_context = tf.transpose(bilstm_output, [0, 2, 1])
-        output = tf.reshape(tf.matmul(t_context, attn),
+        return tf.reshape(tf.matmul(t_context, attn),
                             shape=[batch_size, -1, hidden_size])
     else:
         log.info("Using without projected attention alignment")
         t_context = tf.transpose(r_context, [0, 2, 1])
-        output = tf.reshape(tf.matmul(t_context, attn),
+        return tf.reshape(tf.matmul(t_context, attn),
                             shape=[batch_size, -1, token_size])
-    return output
 
 
 def light_bahdanau_attention(key, context, hidden_size, projected_align=False):
@@ -265,14 +259,13 @@ def light_bahdanau_attention(key, context, hidden_size, projected_align=False):
     if projected_align:
         log.info("Using projected attention alignment")
         t_context = tf.transpose(projected_context, [0, 2, 1])
-        output = tf.reshape(tf.matmul(t_context, attn),
+        return tf.reshape(tf.matmul(t_context, attn),
                             shape=[batch_size, -1, hidden_size])
     else:
         log.info("Using without projected attention alignment")
         t_context = tf.transpose(r_context, [0, 2, 1])
-        output = tf.reshape(tf.matmul(t_context, attn),
+        return tf.reshape(tf.matmul(t_context, attn),
                             shape=[batch_size, -1, token_size])
-    return output
 
 
 def cs_bahdanau_attention(key, context, hidden_size, depth, projected_align=False):
@@ -325,13 +318,10 @@ def cs_bahdanau_attention(key, context, hidden_size, depth, projected_align=Fals
         h_state_for_attn_alignment = bilstm_output
         aligned_h_state = csoftmax_attention.attention_bah_block(
             concat_h_state, h_state_for_attn_alignment, depth)
-        output = \
-            tf.reshape(aligned_h_state, shape=[batch_size, -1, depth * hidden_size])
+        return tf.reshape(aligned_h_state, shape=[batch_size, -1, depth * hidden_size])
     else:
         log.info("Using without projected attention alignment")
         h_state_for_attn_alignment = projected_context
         aligned_h_state = csoftmax_attention.attention_bah_block(
             concat_h_state, h_state_for_attn_alignment, depth)
-        output = \
-            tf.reshape(aligned_h_state, shape=[batch_size, -1, depth * token_size])
-    return output
+        return tf.reshape(aligned_h_state, shape=[batch_size, -1, depth * token_size])

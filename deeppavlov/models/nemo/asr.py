@@ -188,6 +188,4 @@ class NeMoASR(NeMoBase):
         predictions = self.greedy_decoder(log_probs=log_probs)
         eval_tensors = [predictions]
         tensors = self.neural_factory.infer(tensors=eval_tensors)
-        text_batch = post_process_predictions(tensors[0], self.labels)
-
-        return text_batch
+        return post_process_predictions(tensors[0], self.labels)

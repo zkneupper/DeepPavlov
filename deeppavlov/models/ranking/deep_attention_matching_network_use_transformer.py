@@ -134,9 +134,16 @@ class DAMNetworkUSETransformer(TensorflowBaseMatchingModel):
 
         # embed sentences of context
         with tf.variable_scope('sentence_embeddings'):
-            x = []
-            for i in range(self.num_context_turns):
-                x.append(self.embed(tf.reshape(self.context_sent_ph[:, i], shape=(tf.shape(self.context_sent_ph)[0],))))
+            x = [
+                self.embed(
+                    tf.reshape(
+                        self.context_sent_ph[:, i],
+                        shape=(tf.shape(self.context_sent_ph)[0],),
+                    )
+                )
+                for i in range(self.num_context_turns)
+            ]
+
             embed_context_turns = tf.stack(x, axis=1)
             embed_response = self.embed(self.response_sent_ph)
 
@@ -156,9 +163,11 @@ class DAMNetworkUSETransformer(TensorflowBaseMatchingModel):
                                         bias_regularizer=tf.keras.regularizers.l2(),
                                         trainable=True)
 
-            a = []
-            for i in range(self.num_context_turns):
-                a.append(dense_emb(self.sent_embedder_context[:, i]))
+            a = [
+                dense_emb(self.sent_embedder_context[:, i])
+                for i in range(self.num_context_turns)
+            ]
+
             sent_embedder_context = tf.stack(a, axis=1)
             sent_embedder_response = dense_emb(self.sent_embedder_response)
 

@@ -243,10 +243,9 @@ class NerNetwork(LRScheduledTFModel):
             units = tf.layers.dense(units, n_hididden, activation=tf.nn.relu,
                                     kernel_initializer=INITIALIZER(),
                                     kernel_regularizer=tf.nn.l2_loss)
-        logits = tf.layers.dense(units, n_tags, activation=None,
+        return tf.layers.dense(units, n_tags, activation=None,
                                  kernel_initializer=INITIALIZER(),
                                  kernel_regularizer=tf.nn.l2_loss)
-        return logits
 
     def _build_train_predict(self, logits, mask, n_tags, use_crf, l2_reg):
         if use_crf:
@@ -275,10 +274,7 @@ class NerNetwork(LRScheduledTFModel):
 
         # Filter by sequece length
         sequence_lengths = np.sum(mask, axis=1).astype(np.int32)
-        pred = []
-        for utt, l in zip(pred_idxs, sequence_lengths):
-            pred.append(utt[:l])
-        return pred
+        return [utt[:l] for utt, l in zip(pred_idxs, sequence_lengths)]
 
     def predict_crf(self, xs):
         feed_dict = self._fill_feed_dict(xs)

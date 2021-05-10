@@ -168,7 +168,7 @@ class ELMoEmbedder(Component, metaclass=TfModelMeta):
     def _get_dims(self, elmo_output_names, in_dim, concat_last_axis):
         dims = [self.elmo_output_dims[elmo_output_name] for elmo_output_name in elmo_output_names]
         if concat_last_axis:
-            dims = in_dim if in_dim else sum(dims)
+            dims = in_dim or sum(dims)
         else:
             if in_dim:
                 log.warning(f"[ dim = {in_dim} is not used, because the elmo_output_names has more than one element.]")
@@ -216,7 +216,7 @@ class ELMoEmbedder(Component, metaclass=TfModelMeta):
 
         filled_batch = []
         for batch_line in batch:
-            batch_line = batch_line if batch_line else ['']
+            batch_line = batch_line or ['']
             filled_batch.append(batch_line)
 
         batch = filled_batch

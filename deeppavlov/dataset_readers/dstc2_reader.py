@@ -96,7 +96,7 @@ class DSTC2DatasetReader(DatasetReader):
             download_decompress(self.url, data_path)
             mark_done(data_path)
 
-        data = {
+        return {
             'train': self._read_from_file(
                 Path(data_path, self._data_fname('trn')), dialogs),
             'valid': self._read_from_file(
@@ -104,7 +104,6 @@ class DSTC2DatasetReader(DatasetReader):
             'test': self._read_from_file(
                 Path(data_path, self._data_fname('tst')), dialogs)
         }
-        return data
 
     @classmethod
     def _read_from_file(cls, file_path, dialogs=False):
@@ -172,7 +171,6 @@ class DSTC2DatasetReader(DatasetReader):
                         responses.append(turn)
                     elif num_dialog_utter - 1 < num_dialog_resp:
                         if episode_done:
-                            responses.append(turn)
                             utterances.append({
                                 "text": "",
                                 "dialog_acts": [],
@@ -186,7 +184,7 @@ class DSTC2DatasetReader(DatasetReader):
                                                    f" turn = {responses[-1]}")
                             new_turn['db_result'] = responses[-1].pop('db_result')
                             utterances.append(new_turn)
-                            responses.append(turn)
+                        responses.append(turn)
                         num_dialog_utter += 1
                     else:
                         raise RuntimeError("there cannot be two successive turns of"

@@ -310,10 +310,9 @@ class ELMo(NNModel):
         path = self.load_path
         path = path.parent / epoch_load_path
         candidates = path.resolve().glob('[0-9]*')
-        candidates = list(safely_str2int(i.parts[-1]) for i in candidates
-                          if safely_str2int(i.parts[-1]) is not None)
-        epoch_num = max(candidates, default=default)
-        return epoch_num
+        candidates = [safely_str2int(i.parts[-1]) for i in candidates
+                              if safely_str2int(i.parts[-1]) is not None]
+        return max(candidates, default=default)
 
     def _build_graph(self, graph, train=True):
         with graph.as_default():
@@ -349,11 +348,7 @@ class ELMo(NNModel):
                             )
                             tower_grads.append(grads)
                             # # keep track of loss across all GPUs
-                            if train:
-                                loss += total_train_loss
-                            else:
-                                loss += total_eval_loss
-
+                            loss += total_train_loss if train else total_eval_loss
                 # calculate the mean of each gradient across all GPUs
                 grads = average_gradients(tower_grads, self.options['batch_size'], self.options)
                 grads, _ = clip_grads(grads, self.options, True, global_step)
@@ -382,13 +377,6 @@ class ELMo(NNModel):
         if char_inputs:
             max_chars = self.options['char_cnn']['max_characters_per_token']
 
-        if not char_inputs:
-            feed_dict = {
-                model.token_ids:
-                    np.zeros([batch_size, unroll_steps], dtype=np.int64)
-                for model in self.models
-            }
-        else:
             feed_dict = {
                 model.tokens_characters:
                     np.zeros([batch_size, unroll_steps, max_chars],
@@ -396,6 +384,12 @@ class ELMo(NNModel):
                 for model in self.models
             }
 
+        else:
+            feed_dict = {
+                model.token_ids:
+                    np.zeros([batch_size, unroll_steps], dtype=np.int64)
+                for model in self.models
+            }
         if self.options['bidirectional']:
             if not char_inputs:
                 feed_dict.update({

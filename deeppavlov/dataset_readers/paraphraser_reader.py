@@ -55,7 +55,7 @@ class ParaphraserReader(DatasetReader):
             key = (paraphrase.find('value[@name="text_1"]').text,
                    paraphrase.find('value[@name="text_2"]').text)
             if do_lower_case:
-                key = tuple([t.lower() for t in key])
+                key = tuple(t.lower() for t in key)
 
             data[key] = 1 if int(paraphrase.find('value[@name="class"]').text) >= 0 else 0
         return list(data.items())

@@ -116,11 +116,8 @@ class WikiParser:
                     # combs = [{"?ent": "http://www.wikidata.org/entity/Q5513"}, ...]
                 else:
                     if combs:
-                        known_elements = []
                         extended_combs = []
-                        for elem in query:
-                            if elem in combs[0].keys():
-                                known_elements.append(elem)
+                        known_elements = [elem for elem in query if elem in combs[0].keys()]
                         for comb in combs:
                             """
                                 n = 1
@@ -150,7 +147,7 @@ class WikiParser:
                     combs = [comb for comb in combs if filter_value in comb[filter_elem]]
 
             if order_info and not isinstance(order_info, list) and order_info.variable is not None:
-                reverse = True if order_info.sorting_order == "desc" else False
+                reverse = order_info.sorting_order == "desc"
                 sort_elem = order_info.variable
                 for i in range(len(combs)):
                     value_str = combs[i][sort_elem].split('^^')[0].strip('"')
@@ -176,7 +173,6 @@ class WikiParser:
             triplets, c = self.document.search_triples(subj, rel, obj)
             if rel == self.description_rel:
                 triplets = [triplet for triplet in triplets if triplet[2].endswith(self.lang)]
-            combs = [{elem: triplet[pos] for pos, elem in unknown_elem_positions} for triplet in triplets]
         else:
             if subj:
                 subj, triplets = self.find_triplets(subj, "forw")
@@ -190,8 +186,10 @@ class WikiParser:
                 else:
                     rel = rel.split('/')[-1]
                     triplets = [triplet for triplet in triplets if triplet[1] == rel]
-            combs = [{elem: triplet[pos] for pos, elem in unknown_elem_positions} for triplet in triplets]
-        return combs
+        return [
+            {elem: triplet[pos] for pos, elem in unknown_elem_positions}
+            for triplet in triplets
+        ]
 
     def find_label(self, entity: str, question: str) -> str:
         entity = str(entity).replace('"', '')
@@ -207,8 +205,7 @@ class WikiParser:
                 #                                                    '"Lake Baikal"@en'], ...]
                 for label in labels:
                     if label[2].endswith(self.lang):
-                        found_label = label[2].strip(self.lang).replace('"', '')
-                        return found_label
+                        return label[2].strip(self.lang).replace('"', '')
 
             elif entity.endswith(self.lang):
                 # entity: '"Lake Baikal"@en'
@@ -229,17 +226,16 @@ class WikiParser:
 
             elif entity.isdigit():
                 return entity
-        if self.file_format == "pickle":
-            if entity:
-                if entity.startswith("Q"):
-                    triplets = self.document.get(entity, {}).get("forw", [])
-                    triplets = self.uncompress(triplets)
-                    for triplet in triplets:
-                        if triplet[0] == "name_en":
-                            return triplet[1]
-                else:
-                    entity = self.format_date(entity, question)
-                    return entity
+        if self.file_format == "pickle" and entity:
+            if entity.startswith("Q"):
+                triplets = self.document.get(entity, {}).get("forw", [])
+                triplets = self.uncompress(triplets)
+                for triplet in triplets:
+                    if triplet[0] == "name_en":
+                        return triplet[1]
+            else:
+                entity = self.format_date(entity, question)
+                return entity
 
         return "Not Found"
 

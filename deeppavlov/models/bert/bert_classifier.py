@@ -237,7 +237,6 @@ class BertClassifierModel(LRScheduledTFModel):
 
         feed_dict = self._build_feed_dict(input_ids, input_masks, input_type_ids)
         if not self.return_probas:
-            pred = self.sess.run(self.y_predictions, feed_dict=feed_dict)
+            return self.sess.run(self.y_predictions, feed_dict=feed_dict)
         else:
-            pred = self.sess.run(self.y_probas, feed_dict=feed_dict)
-        return pred
+            return self.sess.run(self.y_probas, feed_dict=feed_dict)

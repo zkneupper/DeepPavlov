@@ -132,11 +132,8 @@ class NERFewShotIterator(DataLearningIterator):
             return
 
         order = list(range(data_len))
-        if shuffle is None and self.shuffle:
+        if shuffle is None and self.shuffle or shuffle:
             self.random.shuffle(order)
-        elif shuffle:
-            self.random.shuffle(order)
-
         if batch_size < 0:
             batch_size = data_len
 

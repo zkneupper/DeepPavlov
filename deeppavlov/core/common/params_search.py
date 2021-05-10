@@ -64,9 +64,7 @@ class ParamsSearch:
 
         self.eps = 1e-6
 
-        if seed is None:
-            pass
-        else:
+        if seed is not None:
             np.random.seed(seed)
             random.seed(seed)
 
@@ -83,17 +81,15 @@ class ParamsSearch:
             path in config -- list of keys (strings and integers)
         """
         config_pointer = config
-        if isinstance(config_pointer, dict) and key_model in config_pointer.keys():
+        if isinstance(config_pointer, dict) and key_model in config_pointer:
             yield path
         else:
             if isinstance(config_pointer, dict):
                 for key in list(config_pointer.keys()):
-                    for path_ in self.find_model_path(config_pointer[key], key_model, path + [key]):
-                        yield path_
+                    yield from self.find_model_path(config_pointer[key], key_model, path + [key])
             elif isinstance(config_pointer, list):
                 for i in range(len(config_pointer)):
-                    for path_ in self.find_model_path(config_pointer[i], key_model, path + [i]):
-                        yield path_
+                    yield from self.find_model_path(config_pointer[i], key_model, path + [i])
 
     @staticmethod
     def insert_value_or_dict_into_config(config: dict, path: list,
@@ -115,8 +111,6 @@ class ParamsSearch:
                 config_pointer = config_pointer.setdefault(el, {})
             elif isinstance(config_pointer, list):
                 config_pointer = config_pointer[el]
-            else:
-                pass
         config_pointer[path[-1]] = value
 
     @staticmethod
@@ -138,8 +132,6 @@ class ParamsSearch:
                 config_pointer = config_pointer.setdefault(el, {})
             elif isinstance(config_pointer, list):
                 config_pointer = config_pointer[el]
-            else:
-                pass
         return config_pointer[path[-1]]
 
     @staticmethod
@@ -161,8 +153,6 @@ class ParamsSearch:
                 config_pointer = config_pointer.setdefault(el, {})
             elif isinstance(config_pointer, list):
                 config_pointer = config_pointer[el]
-            else:
-                pass
         value = config_pointer.pop(path[-1])
         return config_copy, value
 
@@ -182,13 +172,16 @@ class ParamsSearch:
         for path_ in paths:
             param_name = path_[-1]
             value = self.get_value_from_config(basic_config, path_)
-            if isinstance(value, dict):
-                if (value.get(self.prefix + "_choice") or
-                        value.get(self.prefix + "_range") or
-                        value.get(self.prefix + "_bool")):
-                    self.insert_value_or_dict_into_config(
-                        config, path_,
-                        self.sample_params(**{param_name: deepcopy(value)})[param_name])
+            if isinstance(value, dict) and (
+                (
+                    value.get(self.prefix + "_choice")
+                    or value.get(self.prefix + "_range")
+                    or value.get(self.prefix + "_bool")
+                )
+            ):
+                self.insert_value_or_dict_into_config(
+                    config, path_,
+                    self.sample_params(**{param_name: deepcopy(value)})[param_name])
 
         return config
 
@@ -210,7 +203,7 @@ class ParamsSearch:
             return {}
         else:
             params_copy = deepcopy(params)
-        params_sample = dict()
+        params_sample = {}
         for param, param_val in params_copy.items():
             if isinstance(param_val, dict):
                 if self.prefix + '_bool' in param_val and param_val[self.prefix + '_bool']:

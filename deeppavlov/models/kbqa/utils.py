@@ -72,9 +72,14 @@ def make_combs(entity_ids: List[List[str]], permut: bool) -> List[List[str]]:
             entity_ids_permut += itertools.permutations(comb)
     else:
         entity_ids_permut = entity_ids
-    entity_ids = sorted(entity_ids_permut, key=lambda x: sum([elem[1] for elem in x]))
-    ent_combs = [[elem[0] for elem in comb] + [sum([elem[1] for elem in comb])] for comb in entity_ids]
-    return ent_combs
+    entity_ids = sorted(
+        entity_ids_permut, key=lambda x: sum(elem[1] for elem in x)
+    )
+
+    return [
+        [elem[0] for elem in comb] + [sum(elem[1] for elem in comb)]
+        for comb in entity_ids
+    ]
 
 
 def fill_query(query: List[str], entity_comb: List[str], type_comb: List[str], rel_comb: List[str]) -> List[str]:
@@ -108,7 +113,6 @@ def fill_query(query: List[str], entity_comb: List[str], type_comb: List[str], r
 def fill_online_query(query: List[str], entity_comb: List[str], type_comb: List[str],
                       rel_comb: List[str], rels_to_replace: List[str],
                       rels_for_filter: List[str], rel_list_for_filter: List[List[str]]) -> Tuple[str, List[str]]:
-    rel_list_for_filter = [[rel for rel, score in rel_list] for rel_list in rel_list_for_filter]
     for n, entity in enumerate(entity_comb[:-1]):
         query = query.replace(f"e{n + 1}", entity)
     for n, entity_type in enumerate(type_comb[:-1]):  # type_entity
@@ -120,6 +124,7 @@ def fill_online_query(query: List[str], entity_comb: List[str], type_comb: List[
     new_rels = []
     if rels_for_filter:
         n = 0
+        rel_list_for_filter = [[rel for rel, score in rel_list] for rel_list in rel_list_for_filter]
         for rel, candidate_rels in zip(rels_for_filter, rel_list_for_filter):
             rel_types = re.findall(f" ([\S]+:){rel}", query)
             for rel_type in rel_types:

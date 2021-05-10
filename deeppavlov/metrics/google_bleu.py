@@ -39,7 +39,7 @@ def _get_ngrams(segment, max_order):
     """
     ngram_counts = collections.Counter()
     for order in range(1, max_order + 1):
-        for i in range(0, len(segment) - order + 1):
+        for i in range(len(segment) - order + 1):
             ngram = tuple(segment[i:i + order])
             ngram_counts[ngram] += 1
     return ngram_counts
@@ -83,7 +83,7 @@ def compute_bleu(reference_corpus, translation_corpus, max_order=4,
                 possible_matches_by_order[order - 1] += possible_matches
 
     precisions = [0] * max_order
-    for i in range(0, max_order):
+    for i in range(max_order):
         if smooth:
             precisions[i] = ((matches_by_order[i] + 1.) /
                              (possible_matches_by_order[i] + 1.))
@@ -102,11 +102,7 @@ def compute_bleu(reference_corpus, translation_corpus, max_order=4,
 
     ratio = float(translation_length) / reference_length
 
-    if ratio > 1.0:
-        bp = 1.
-    else:
-        bp = math.exp(1 - 1. / ratio)
-
+    bp = 1. if ratio > 1.0 else math.exp(1 - 1. / ratio)
     bleu = geo_mean * bp
 
     return (bleu, precisions, bp, ratio, translation_length, reference_length)

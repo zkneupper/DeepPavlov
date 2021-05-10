@@ -59,7 +59,7 @@ class ImdbReader(DatasetReader):
 
         data = {"train": [],
                 "test": []}
-        for data_type in data.keys():
+        for data_type in data:
             for label in ["neg", "pos"]:
                 labelpath = data_path / data_type / label
                 if not labelpath.exists():

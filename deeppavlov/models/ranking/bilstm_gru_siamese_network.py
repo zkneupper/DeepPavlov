@@ -52,7 +52,7 @@ class BiLSTMGRUSiameseNetwork(BiLSTMSiameseNetwork):
     def create_model(self) -> Model:
         input = []
         if self.use_matrix:
-            for i in range(self.num_context_turns + 1):
+            for _ in range(self.num_context_turns + 1):
                 input.append(Input(shape=(self.max_sequence_length,)))
             context = input[:self.num_context_turns]
             response = input[-1]
@@ -60,7 +60,7 @@ class BiLSTMGRUSiameseNetwork(BiLSTMSiameseNetwork):
             emb_c = [emb_layer(el) for el in context]
             emb_r = emb_layer(response)
         else:
-            for i in range(self.num_context_turns + 1):
+            for _ in range(self.num_context_turns + 1):
                 input.append(Input(shape=(self.max_sequence_length, self.embedding_dim,)))
             context = input[:self.num_context_turns]
             response = input[-1]
@@ -82,8 +82,7 @@ class BiLSTMGRUSiameseNetwork(BiLSTMSiameseNetwork):
         else:
             dist = Lambda(self._diff_mult_dist)([gru_c, lstm_r])
             dist = Dense(1, activation='sigmoid', name="score_model")(dist)
-        model = Model(context + [response], dist)
-        return model
+        return Model(context + [response], dist)
 
     def create_score_model(self) -> Model:
         cr = self.model.inputs
@@ -96,15 +95,12 @@ class BiLSTMGRUSiameseNetwork(BiLSTMSiameseNetwork):
             score = self.model.get_layer("score_model").output
             score = Lambda(lambda x: 1. - K.squeeze(x, -1))(score)
         score = Lambda(lambda x: 1. - x)(score)
-        model = Model(cr, score)
-        return model
+        return Model(cr, score)
 
     def create_context_model(self) -> Model:
-        m = Model(self.model.inputs[:-1],
+        return Model(self.model.inputs[:-1],
                   self.model.get_layer("gru").output)
-        return m
 
     def create_response_model(self) -> Model:
-        m = Model(self.model.inputs[-1],
+        return Model(self.model.inputs[-1],
                   self.model.get_layer("pooling").get_output_at(-1))
-        return m

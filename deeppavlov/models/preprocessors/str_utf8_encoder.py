@@ -88,8 +88,6 @@ class StrUTF8Encoder(Estimator):
             if self._pad_special_char_use:
                 code = np.pad(code, (0, self._max_word_length - code.shape[0]), 'constant',
                               constant_values=(self.pad_char))
-            else:
-                pass
             return code
 
         self.bos_chars = _make_bos_eos(self.bos_char)
@@ -132,17 +130,16 @@ class StrUTF8Encoder(Estimator):
 
     @overrides
     def load(self) -> None:
-        if self.load_path:
-            if self.load_path.is_file():
-                log.info(f"[loading vocabulary from {self.load_path}]")
-                self.tokens = []
-                for ln in self.load_path.open('r', encoding='utf8'):
-                    token = ln.strip().split()[0]
-                    self.tokens.append(token)
-            else:
-                raise ConfigError(f"Provided `load_path` for {self.__class__.__name__} doesn't exist!")
-        else:
+        if not self.load_path:
             raise ConfigError(f"`load_path` for {self} is not provided!")
+
+        if not self.load_path.is_file():
+            raise ConfigError(f"Provided `load_path` for {self.__class__.__name__} doesn't exist!")
+        log.info(f"[loading vocabulary from {self.load_path}]")
+        self.tokens = []
+        for ln in self.load_path.open('r', encoding='utf8'):
+            token = ln.strip().split()[0]
+            self.tokens.append(token)
 
     @overrides
     def save(self) -> None:
@@ -157,7 +154,7 @@ class StrUTF8Encoder(Estimator):
         # filter(None, <>) -- to filter empty words
         freqs = Counter(filter(None, chain(*words)))
         for token, _ in freqs.most_common():
-            if not (token in self._word_char_ids):
+            if token not in self._word_char_ids:
                 self._word_char_ids[token] = self._convert_word_to_char_ids(token)
 
     def _convert_word_to_char_ids(self, word):

@@ -84,39 +84,38 @@ def main():
         param_values.append(param_value_search)
 
     # find optimal params
-    if args.search_type == 'grid':
-        # generate params combnations for grid search
-        combinations = list(product(*param_values))
-
-        # calculate cv scores
-        scores = []
-        for comb in combinations:
-            config = deepcopy(config_init)
-            for param_path, param_value in zip(param_paths, comb):
-                params_helper.insert_value_or_dict_into_config(config, param_path, param_value)
-            config = parse_config(config)
-
-            if (n_folds is not None) | is_loo:
-                # CV for model evaluation
-                score_dict = calc_cv_score(config, data=data, n_folds=n_folds, is_loo=is_loo)
-                score = score_dict[next(iter(score_dict))]
-            else:
-                # train/valid for model evaluation
-                data_to_evaluate = data.copy()
-                if len(data_to_evaluate['valid']) == 0:
-                    data_to_evaluate['train'], data_to_evaluate['valid'] = train_test_split(data_to_evaluate['train'],
-                                                                                            test_size=0.2)
-                iterator = get_iterator_from_config(config, data_to_evaluate)
-                score = train_evaluate_model_from_config(config, iterator=iterator)['valid'][target_metric]
-
-            scores.append(score)
-
-        # get model with best score
-        best_params_dict = get_best_params(combinations, scores, param_names, target_metric)
-        log.info('Best model params: {}'.format(best_params_dict))
-    else:
+    if args.search_type != 'grid':
         raise NotImplementedError('Not implemented this type of search')
 
+    # generate params combnations for grid search
+    combinations = list(product(*param_values))
+
+    # calculate cv scores
+    scores = []
+    for comb in combinations:
+        config = deepcopy(config_init)
+        for param_path, param_value in zip(param_paths, comb):
+            params_helper.insert_value_or_dict_into_config(config, param_path, param_value)
+        config = parse_config(config)
+
+        if (n_folds is not None) | is_loo:
+            # CV for model evaluation
+            score_dict = calc_cv_score(config, data=data, n_folds=n_folds, is_loo=is_loo)
+            score = score_dict[next(iter(score_dict))]
+        else:
+            # train/valid for model evaluation
+            data_to_evaluate = data.copy()
+            if len(data_to_evaluate['valid']) == 0:
+                data_to_evaluate['train'], data_to_evaluate['valid'] = train_test_split(data_to_evaluate['train'],
+                                                                                        test_size=0.2)
+            iterator = get_iterator_from_config(config, data_to_evaluate)
+            score = train_evaluate_model_from_config(config, iterator=iterator)['valid'][target_metric]
+
+        scores.append(score)
+
+    # get model with best score
+    best_params_dict = get_best_params(combinations, scores, param_names, target_metric)
+    log.info('Best model params: {}'.format(best_params_dict))
     # save config
     best_config = config_init
     for i, param_name in enumerate(best_params_dict.keys()):

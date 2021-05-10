@@ -85,8 +85,8 @@ def multitask_sequence_accuracy(*args) -> float:
     y_true_by_tasks, y_predicted_by_tasks = args[:n // 2], args[n // 2:]
     y_true_by_sents = list(zip(*y_true_by_tasks))
     y_predicted_by_sents = list(zip(*y_predicted_by_tasks))
-    y_true = list(list(zip(*elem)) for elem in y_true_by_sents)
-    y_predicted = list(list(zip(*elem)) for elem in y_predicted_by_sents)
+    y_true = [list(zip(*elem)) for elem in y_true_by_sents]
+    y_predicted = [list(zip(*elem)) for elem in y_predicted_by_sents]
     return accuracy(y_true, y_predicted)
 
 
@@ -107,8 +107,8 @@ def multitask_token_accuracy(*args) -> float:
     y_true_by_tasks, y_predicted_by_tasks = args[:n // 2], args[n // 2:]
     y_true_by_sents = list(zip(*y_true_by_tasks))
     y_predicted_by_sents = list(zip(*y_predicted_by_tasks))
-    y_true = list(list(zip(*elem)) for elem in y_true_by_sents)
-    y_predicted = list(list(zip(*elem)) for elem in y_predicted_by_sents)
+    y_true = [list(zip(*elem)) for elem in y_true_by_sents]
+    y_predicted = [list(zip(*elem)) for elem in y_predicted_by_sents]
     return per_token_accuracy(y_true, y_predicted)
 
 
@@ -125,7 +125,7 @@ def sets_accuracy(y_true: [list, np.ndarray], y_predicted: [list, np.ndarray]) -
         portion of samples with absolutely coincidental sets of predicted values
     """
     examples_len = len(y_true)
-    correct = sum([set(y1) == set(y2) for y1, y2 in zip(y_true, y_predicted)])
+    correct = sum(set(y1) == set(y2) for y1, y2 in zip(y_true, y_predicted))
     return correct / examples_len if examples_len else 0
 
 
@@ -141,7 +141,7 @@ def per_token_accuracy(y_true, y_predicted):
     y_true = list(itertools.chain(*y_true))
     y_predicted = itertools.chain(*y_predicted)
     examples_len = len(y_true)
-    correct = sum([y1 == y2 for y1, y2 in zip(y_true, y_predicted)])
+    correct = sum(y1 == y2 for y1, y2 in zip(y_true, y_predicted))
     return correct / examples_len if examples_len else 0
 
 
@@ -153,7 +153,11 @@ def per_item_dialog_accuracy(y_true, y_predicted: List[List[str]]):
     y_true = [y['text'] for dialog in y_true for y in dialog]
     y_predicted = itertools.chain(*y_predicted)
     examples_len = len(y_true)
-    correct = sum([y1.strip().lower() == y2.strip().lower() for y1, y2 in zip(y_true, y_predicted)])
+    correct = sum(
+        y1.strip().lower() == y2.strip().lower()
+        for y1, y2 in zip(y_true, y_predicted)
+    )
+
     return correct / examples_len if examples_len else 0
 
 
@@ -188,15 +192,15 @@ def round_accuracy(y_true, y_predicted):
     """
     predictions = [round(x) for x in y_predicted]
     examples_len = len(y_true)
-    correct = sum([y1 == y2 for y1, y2 in zip(y_true, predictions)])
+    correct = sum(y1 == y2 for y1, y2 in zip(y_true, predictions))
     return correct / examples_len if examples_len else 0
 
 
 @register_metric('kbqa_accuracy')
 def kbqa_accuracy(y_true, y_predicted):
-    total_correct = 0
-    for answer_true, answer_predicted in zip(y_true, y_predicted):
-        if answer_predicted in answer_true:
-            total_correct += 1
+    total_correct = sum(
+        answer_predicted in answer_true
+        for answer_true, answer_predicted in zip(y_true, y_predicted)
+    )
 
     return total_correct / len(y_true) if len(y_true) else 0
